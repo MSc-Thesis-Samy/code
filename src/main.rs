@@ -61,22 +61,52 @@ fn square<const N: usize>(network: &Network<N, 2>) -> f64 {
         .sum::<f64>() / 4.
 }
 
-fn main() {
-    let mut network = Network::<1, 2>::new();
+fn cube<const N: usize>(network: &Network<N, 3>) -> f64 {
+    let points_with_labels = [
+        (1., PI / 4., PI / 4., true),
+        (1., 3. * PI / 4., PI / 4., false),
+        (1., 5. * PI / 4., PI / 4., true),
+        (1., 7. * PI / 4., PI / 4., false),
+        (1., PI / 4., 3. * PI / 4., true),
+        (1., 3. * PI / 4., 3. * PI / 4., false),
+        (1., 5. * PI / 4., 3. * PI / 4., true),
+        (1., 7. * PI / 4., 3. * PI / 4., false),
+    ];
 
-    network.optimize(half, 5000);
+    points_with_labels
+        .iter()
+        .map(|&(r, theta, phi, label)| {
+            let output = network.evaluate(&[r, theta, phi]);
+            if output && label || !output && !label {
+                1.
+            } else {
+                0.
+            }
+        })
+        .sum::<f64>() / 8.
+}
+
+fn main() {
+    let mut network = Network::<2, 2>::new();
+
+    network.optimize(half, 3000);
     println!("half Fitness: {}", half(&network));
     print!("{}", network);
 
-    network.optimize(quarter, 5000);
+    network.optimize(quarter, 3000);
     println!("quarter Fitness: {}", quarter(&network));
     print!("{}", network);
 
-    network.optimize(two_quarters, 5000);
+    network.optimize(two_quarters, 3000);
     println!("two_quarters Fitness: {}", two_quarters(&network));
     print!("{}", network);
 
-    network.optimize(square, 5000);
+    network.optimize(square, 3000);
     println!("square Fitness: {}", square(&network));
+    print!("{}", network);
+
+    let mut network = Network::<4, 3>::new();
+    network.optimize(cube, 3000);
+    println!("cube Fitness: {}", cube(&network));
     print!("{}", network);
 }
