@@ -34,7 +34,7 @@ impl<const N: usize> std::fmt::Display for Network<N> {
                 .join(", "),
             self.biases
                 .iter()
-                .map(|&x| format!("{:.2}", x))
+                .map(|&x| format!("{:.2}", 2. * x - 1.))
                 .collect::<Vec<_>>()
                 .join(", ")
         )

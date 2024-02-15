@@ -17,7 +17,7 @@ fn half<const N: usize>(network: &Network<N>) -> f64 {
 
 fn main() {
     let mut network = Network::<1>::new();
-    network.optimize(half, 1000);
+    network.optimize(half, 10000);
     println!("{}", network);
     println!("Fitness: {}", half(&network));
 }
