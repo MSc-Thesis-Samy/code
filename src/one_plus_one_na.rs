@@ -74,9 +74,8 @@ impl<const N: usize> Network<N> {
     pub fn evaluate(&self, input: (f64, f64)) -> bool {
         let mut hidden = [false; N];
         for i in 0..N {
-            let neuron_angle = self.angles[i] * 2. * PI;
             let normal = (1., self.angles[i] * 2. * PI);
-            hidden[i] = polar_dot_product(input, normal) - self.biases[i] > 0.;
+            hidden[i] = polar_dot_product(input, normal) - (2. * self.biases[i] - 1.) > 0.;
         }
         (self.output_layer)(&hidden)
     }
