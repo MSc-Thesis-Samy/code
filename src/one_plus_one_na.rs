@@ -5,9 +5,9 @@ use std::f64::consts::PI;
 
 #[derive(Debug, Clone)]
 pub struct Network<const N: usize> {
-    pub angles: [f64; N],
-    pub biases: [f64; N],
-    pub output_layer: fn(&[bool; N]) -> bool,
+    angles: [f64; N],
+    biases: [f64; N],
+    output_layer: fn(&[bool; N]) -> bool,
 }
 
 fn generate_random_array<const N: usize>() -> [f64; N] {
