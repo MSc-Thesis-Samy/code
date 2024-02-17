@@ -98,6 +98,7 @@ impl<const N: usize, const D: usize> Network<N, D> {
 }
 
 pub fn get_network<const N: usize, const D: usize>(x: &DVector<f64>) -> Network<N, D> {
+    let x: DVector<f64> = x.map(|x| x - x.floor());
     let mut parameters = [[0.;D];N];
     for i in 0..N {
         for j in 0..D {
