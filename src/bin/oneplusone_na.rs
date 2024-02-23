@@ -1,4 +1,4 @@
-use neuroevolution::one_plus_one_na::*;
+use neuroevolution::oneplusone_na::*;
 use neuroevolution::network::Network;
 
 fn main() {
