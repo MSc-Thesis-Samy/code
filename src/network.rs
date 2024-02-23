@@ -3,6 +3,7 @@ use std::f64::consts::PI;
 use rand::prelude::*;
 use rand_distr::{Exp, Distribution};
 use cmaes::DVector;
+use crate::utils::*;
 
 #[derive(Debug, Clone)]
 pub struct Network<const N: usize, const D: usize> {
@@ -10,31 +11,7 @@ pub struct Network<const N: usize, const D: usize> {
     output_layer: fn(&[bool; N]) -> bool,
 }
 
-fn generate_random_array<const N: usize, const D: usize>() -> [[f64;D];N] {
-    let mut array = [[0.;D];N];
-    for i in 0..N {
-        for j in 0..D {
-            array[i][j] = random::<f64>();
-        }
-    }
-    array
-}
-
-fn polar_dot_product<const D: usize>(v1: &[f64; D], v2: &[f64; D]) -> f64 {
-    let (r1, angles1) = v1.split_first().unwrap();
-    let (r2, angles2) = v2.split_first().unwrap();
-
-    let norm_product = r1 * r2;
-    let angle_difference_cosine: f64 = angles1
-        .iter()
-        .zip(angles2.iter())
-        .map(|(&theta1, &theta2)| (theta1 - theta2).cos())
-        .product();
-
-    norm_product * angle_difference_cosine
-}
-
-impl<const N: usize, const D: usize> std::fmt::Display for Network<N, D> {
+impl<const N: usize, const D: usize> fmt::Display for Network<N, D> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (index, param) in self.parameters.iter().enumerate() {
             write!(f, "Neuron {}: [", index)?;
@@ -57,7 +34,7 @@ impl<const N: usize, const D: usize> std::fmt::Display for Network<N, D> {
 impl<const N: usize, const D: usize> Network<N, D> {
     pub fn new() -> Self {
         Self {
-            parameters: generate_random_array::<N, D>(),
+            parameters: generate_random_array_2d::<N, D>(),
             output_layer: |inputs: &[bool; N]| inputs.iter().any(|&x| x), // OR
         }
     }
