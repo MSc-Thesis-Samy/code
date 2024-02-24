@@ -86,19 +86,19 @@ impl VNeuron {
             normal[i] = self.angles[i - 1] * 2. * PI;
         }
 
-        // check that the input is on the right side of the hyperplane
-        if polar_dot_product_vect(input, &normal) - (2. * self.bias - 1.) < 0.
-        {
+        let dot_product = polar_dot_product_vect(input, &normal) - (2. * self.bias - 1.);
+
+        if dot_product < 0. && self.bend * PI < PI / 2. {
             return false;
         }
-
-        // check that the input is in the cone
-        for i in 1..self.dim {
-            let input_angle = input[i] / (2. * PI);
-            if input_angle < self.angles[i-1] - self.bend || input_angle > self.angles[i-1] + self.bend {
-                return false;
-            }
+        if dot_product >= 0. && self.bend * PI >= PI / 2. {
+            return true;
         }
-        true
+
+        let norm = (polar_dot_product_vect(input, input) + (2. * self.bias - 1.) * (2. * self.bias - 1.) - 2. * (2. * self.bias - 1.) * polar_dot_product_vect(input, &normal)).sqrt();
+        let cos_angle = dot_product / norm;
+        let angle = cos_angle.acos();
+
+        angle <= self.bend * PI
     }
 }
