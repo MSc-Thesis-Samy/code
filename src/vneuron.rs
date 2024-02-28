@@ -81,12 +81,13 @@ impl VNeuron {
 
     pub fn evaluate(&self, input: &Vec<f64>) -> bool {
         let mut normal = vec![0.; self.dim];
+        let bias = 2. * self.bias - 1.;
         normal[0] = 1.;
         for i in 1..self.dim {
             normal[i] = self.angles[i - 1] * 2. * PI;
         }
 
-        let dot_product = polar_dot_product_vect(input, &normal) - (2. * self.bias - 1.);
+        let dot_product = polar_dot_product_vect(input, &normal) - bias;
 
         if dot_product < 0. && self.bend * PI < PI / 2. {
             return false;
@@ -95,7 +96,7 @@ impl VNeuron {
             return true;
         }
 
-        let norm = (polar_dot_product_vect(input, input) + (2. * self.bias - 1.) * (2. * self.bias - 1.) - 2. * (2. * self.bias - 1.) * polar_dot_product_vect(input, &normal)).sqrt();
+        let norm = (polar_dot_product_vect(input, input) + bias * bias - 2. * bias * polar_dot_product_vect(input, &normal)).sqrt();
         let cos_angle = dot_product / norm;
         let angle = cos_angle.acos();
 

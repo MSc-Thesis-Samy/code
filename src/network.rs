@@ -4,6 +4,7 @@ use rand::prelude::*;
 use rand_distr::{Exp, Distribution};
 use cmaes::DVector;
 use crate::utils::*;
+use crate::network_trait::NetworkTrait;
 
 #[derive(Debug, Clone)]
 pub struct Network<const N: usize, const D: usize> {
@@ -31,22 +32,15 @@ impl<const N: usize, const D: usize> fmt::Display for Network<N, D> {
     }
 }
 
-impl<const N: usize, const D: usize> Network<N, D> {
-    pub fn new() -> Self {
-        Self {
-            parameters: generate_random_array_2d::<N, D>(),
-            output_layer: |inputs: &[bool; N]| inputs.iter().any(|&x| x), // OR
-        }
-    }
-
-    pub fn optimize(&mut self, evaluation_function: fn(&Network<N, D>) -> f64, n_iters: u32) {
+impl<const N: usize, const D: usize> NetworkTrait<N, D> for Network<N, D> {
+    fn optimize(&mut self, evaluation_function: fn(&Network<N, D>) -> f64, n_iters: u32) {
         let exp = Exp::new(1.).unwrap();
 
         for _ in 0..n_iters {
             let mut new_network = self.clone();
             for i in 0..N {
                 for j in 0..D {
-                    if random::<f64>() < 1. / (2. * N as f64) {
+                    if random::<f64>() < 1. / (D as f64 * N as f64) {
                         let sign = if random::<f64>() < 0.5 { 1. } else { -1. };
                         new_network.parameters[i][j] += sign * exp.sample(&mut thread_rng());
                         new_network.parameters[i][j] -= new_network.parameters[i][j].floor();
@@ -60,7 +54,7 @@ impl<const N: usize, const D: usize> Network<N, D> {
         }
     }
 
-    pub fn evaluate(&self, input: &[f64; D]) -> bool {
+    fn evaluate(&self, input: &[f64; D]) -> bool {
         let mut hidden = [false; N];
         for i in 0..N {
             let mut normal = [0.;D];
@@ -72,18 +66,28 @@ impl<const N: usize, const D: usize> Network<N, D> {
         }
         (self.output_layer)(&hidden)
     }
+
 }
 
-pub fn get_network<const N: usize, const D: usize>(x: &DVector<f64>) -> Network<N, D> {
-    let x: DVector<f64> = x.map(|x| x - x.floor());
-    let mut parameters = [[0.;D];N];
-    for i in 0..N {
-        for j in 0..D {
-            parameters[i][j] = x[i * D + j];
+impl<const N: usize, const D: usize> Network<N, D> {
+    pub fn new() -> Self {
+        Self {
+            parameters: generate_random_float_array::<N, D>(),
+            output_layer: |inputs: &[bool; N]| inputs.iter().any(|&x| x), // OR
         }
     }
-    Network {
-        parameters,
-        output_layer: |hidden: &[bool; N]| hidden.iter().any(|&x| x),
+
+    pub fn get_network(x: &DVector<f64>) -> Network<N, D> {
+        let x: DVector<f64> = x.map(|x| x - x.floor());
+        let mut parameters = [[0.;D];N];
+        for i in 0..N {
+            for j in 0..D {
+                parameters[i][j] = x[i * D + j];
+            }
+        }
+        Network {
+            parameters,
+            output_layer: |hidden: &[bool; N]| hidden.iter().any(|&x| x),
+        }
     }
 }
