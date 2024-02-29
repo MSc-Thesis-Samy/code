@@ -3,13 +3,14 @@ use std::f64::consts::PI;
 use rand::prelude::*;
 use rand_distr::{Exp, Distribution};
 use crate::utils::*;
+use crate::traits::VNeuronTrait;
 
 #[derive(Debug, Clone)]
 pub struct VNeuron {
-    pub dim: usize,
-    pub bias: f64,
-    pub angles: Vec<f64>,
-    pub bend: f64,
+    dim: usize,
+    bias: f64,
+    angles: Vec<f64>,
+    bend: f64,
 }
 
 impl fmt::Display for VNeuron {
@@ -57,8 +58,10 @@ impl VNeuron {
         *component += sign * exp.sample(&mut thread_rng());
         *component -= component.floor();
     }
+}
 
-    pub fn optimize(&mut self, evaluation_function: fn(&VNeuron) -> f64, n_iters: u32) {
+impl VNeuronTrait for VNeuron {
+    fn optimize(&mut self, evaluation_function: fn(&VNeuron) -> f64, n_iters: u32) {
         for _ in 0..n_iters {
             let mut new_vneuron = self.clone();
             if random::<f64>() < 1. / 3. {
@@ -79,7 +82,7 @@ impl VNeuron {
         }
     }
 
-    pub fn evaluate(&self, input: &Vec<f64>) -> bool {
+    fn evaluate(&self, input: &Vec<f64>) -> bool {
         let mut normal = vec![0.; self.dim];
         let bias = 2. * self.bias - 1.;
         normal[0] = 1.;

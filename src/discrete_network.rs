@@ -2,7 +2,7 @@ use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
 use crate::utils::*;
-use crate::network_trait::NetworkTrait;
+use crate::traits::NetworkTrait;
 
 #[derive(Debug, Clone)]
 pub struct DiscreteNetwork<const N: usize, const D: usize> {

@@ -4,7 +4,7 @@ use rand::prelude::*;
 use rand_distr::{Exp, Distribution};
 use cmaes::DVector;
 use crate::utils::*;
-use crate::network_trait::NetworkTrait;
+use crate::traits::NetworkTrait;
 
 #[derive(Debug, Clone)]
 pub struct Network<const N: usize, const D: usize> {

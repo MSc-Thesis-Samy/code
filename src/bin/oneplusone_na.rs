@@ -1,7 +1,7 @@
 use neuroevolution::oneplusone_na::*;
 use neuroevolution::network::Network;
 use neuroevolution::discrete_network::DiscreteNetwork;
-use neuroevolution::network_trait::NetworkTrait;
+use neuroevolution::traits::NetworkTrait;
 
 fn main() {
     let mut network = Network::<1, 2>::new();

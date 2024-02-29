@@ -1,5 +1,5 @@
 use std::f64::consts::PI;
-use crate::network_trait::NetworkTrait;
+use crate::traits::NetworkTrait;
 
 const UNIT_CIRCLE_STEPS: u32 = 1000;
 

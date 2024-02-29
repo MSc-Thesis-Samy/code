@@ -1,9 +1,13 @@
 use std::f64::consts::PI;
 use crate::vneuron::*;
+use crate::traits::VNeuronTrait;
 
 const UNIT_CIRCLE_STEPS: u32 = 100;
 
-pub fn half(vneuron: &VNeuron) -> f64 {
+pub fn half<N>(vneuron: &N) -> f64
+where
+    N: VNeuronTrait,
+{
     let mut sum = 0;
     for i in 0..UNIT_CIRCLE_STEPS - 1 {
         let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
@@ -16,7 +20,10 @@ pub fn half(vneuron: &VNeuron) -> f64 {
     sum as f64 / (UNIT_CIRCLE_STEPS - 1) as f64
 }
 
-pub fn quarter(vneuron: &VNeuron) -> f64 {
+pub fn quarter<N>(vneuron: &N) -> f64
+where
+    N: VNeuronTrait,
+{
     let mut sum = 0;
     for i in 0..UNIT_CIRCLE_STEPS - 1 {
         let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
@@ -29,7 +36,10 @@ pub fn quarter(vneuron: &VNeuron) -> f64 {
     sum as f64 / (UNIT_CIRCLE_STEPS - 1) as f64
 }
 
-pub fn two_quarters(vneuron: &VNeuron) -> f64 {
+pub fn two_quarters<N>(vneuron: &N) -> f64
+where
+    N: VNeuronTrait,
+{
     let mut sum = 0;
     for i in 0..UNIT_CIRCLE_STEPS - 1 {
         let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
@@ -43,7 +53,10 @@ pub fn two_quarters(vneuron: &VNeuron) -> f64 {
     sum as f64 / (UNIT_CIRCLE_STEPS - 1) as f64
 }
 
-pub fn square(vneuron: &VNeuron) -> f64 {
+pub fn square<N>(vneuron: &N) -> f64
+where
+    N: VNeuronTrait,
+{
     let points_with_labels = [
         (1., PI / 4., true),
         (1., 3. * PI / 4., false),
