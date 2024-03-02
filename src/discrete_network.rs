@@ -2,63 +2,70 @@ use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
 use crate::utils::*;
-use crate::traits::NetworkTrait;
+use crate::traits::NeuroevolutionAlgorithm;
 
 #[derive(Debug, Clone)]
-pub struct DiscreteNetwork<const N: usize, const D: usize> {
+pub struct DiscreteNetwork {
+    n_neurons: usize,
+    dim: usize,
     resolution: usize,
-    parameters: [[u32;D];N],
-    output_layer: fn(&[bool; N]) -> bool,
+    biases: Vec<u32>,
+    angles: Vec<Vec<u32>>,
+    output_layer: fn(&Vec<bool>) -> bool,
 }
 
-impl<const N: usize, const D: usize> fmt::Display for DiscreteNetwork<N, D> {
+impl fmt::Display for DiscreteNetwork {
+
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for (index, param) in self.parameters.iter().enumerate() {
-            write!(f, "Neuron {}: [", index)?;
-            for (i, &value) in param.iter().enumerate() {
-                if i == 0 {
-                    let bias = 2. * value as f64 / self.resolution as f64 - 1.;
-                    write!(f, "{:.2}", bias)?;
-                } else {
-                    let angle = 2. * PI * value as f64 / self.resolution as f64;
-                    write!(f, "{:.2}", angle)?;
-                }
-                if i != param.len() - 1 {
-                    write!(f, ", ")?;
-                }
-            }
-            write!(f, "]\n")?;
-        }
+        let formatted_biases: Vec<String> = self.biases.iter()
+            .map(|&bias| format!("{:.2}", 2. * bias as f64 / self.resolution as f64 - 1.))
+            .collect();
+
+        let formatted_angles: Vec<Vec<String>> = self.angles.iter()
+            .map(|row| {
+                row.iter()
+                    .map(|&angle| format!("{:.2}", angle as f64 / self.resolution as f64 * 2. * PI))
+                    .collect()
+            })
+            .collect();
+
+        writeln!(f, "Number of Neurons: {}", self.n_neurons)?;
+        writeln!(f, "Dimension: {}", self.dim)?;
+        writeln!(f, "Biases: {:?}", formatted_biases)?;
+        writeln!(f, "Angles: {:?}", formatted_angles)?;
+
         Ok(())
     }
 }
 
-impl<const N: usize, const D: usize> DiscreteNetwork<N, D> {
-    pub fn new(resolution: usize) -> Self {
+impl DiscreteNetwork {
+    pub fn new(resolution: usize, n_neurons: usize, dim: usize) -> Self {
+        let mut rng = thread_rng();
         Self {
             resolution,
-            parameters: generate_random_int_array::<N, D>(resolution),
-            output_layer: |inputs: &[bool; N]| inputs.iter().any(|&x| x), // OR
+            n_neurons,
+            dim,
+            biases: vec![rng.gen_range(0..=resolution as u32); n_neurons],
+            angles: vec![vec![rng.gen_range(0..resolution as u32); dim - 1]; n_neurons],
+            output_layer: |inputs: &Vec<bool>| inputs.iter().any(|&x| x),
         }
+    }
+
+    fn mutate_component(component: u32, upper_bound: usize) -> u32 {
+        let mut rng = thread_rng();
+        let sign: i8 = if random::<f64>() < 0.5 { 1 } else { -1 };
+        (component as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, upper_bound) as i32 % upper_bound as i32) as u32
     }
 }
 
-impl<const N: usize, const D: usize> NetworkTrait<N, D> for DiscreteNetwork<N, D> {
-    fn optimize(&mut self, evaluation_function: fn(&DiscreteNetwork<N, D>) -> f64, n_iters: u32) {
-        let mut rng = thread_rng();
-
+impl NeuroevolutionAlgorithm for DiscreteNetwork {
+    fn optimize(&mut self, evaluation_function: fn(&DiscreteNetwork) -> f64, n_iters: u32) {
         for _ in 0..n_iters {
             let mut new_network = self.clone();
-            for i in 0..N {
-                if random::<f64>() < 1. / (D as f64 * N as f64) {
-                    let sign: i8 = if random::<f64>() < 0.5 { 1 } else { -1 };
-                    new_network.parameters[i][0] = ((new_network.parameters[i][0] as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, self.resolution) as i32) % self.resolution as i32 + 1) as u32;
-                }
-                for j in 1..D {
-                    if random::<f64>() < 1. / (D as f64 * N as f64) {
-                        let sign: i8 = if random::<f64>() < 0.5 { 1 } else { -1 };
-                        new_network.parameters[i][j] = ((new_network.parameters[i][j] as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, self.resolution) as i32) % self.resolution as i32) as u32;
-                    }
+            for i in 0..self.n_neurons {
+                new_network.biases[i] = DiscreteNetwork::mutate_component(self.biases[i], self.resolution + 1);
+                for j in 0..self.dim-1 {
+                    new_network.angles[i][j] = DiscreteNetwork::mutate_component(self.angles[i][j], self.resolution);
                 }
             }
 
@@ -68,15 +75,15 @@ impl<const N: usize, const D: usize> NetworkTrait<N, D> for DiscreteNetwork<N, D
         }
     }
 
-    fn evaluate(&self, input: &[f64; D]) -> bool {
-        let mut hidden = [false; N];
-        for i in 0..N {
-            let mut normal = [0.;D];
+    fn evaluate(&self, input: &Vec<f64>) -> bool {
+        let mut hidden = vec![false; self.n_neurons];
+        for i in 0..self.n_neurons {
+            let mut normal = vec![0.;self.dim];
             normal[0] = 1.;
-            for j in 1..D {
-                normal[j] = self.parameters[i][j] as f64 / self.resolution as f64 * 2. * PI;
+            for j in 1..self.dim {
+                normal[j] = self.angles[i][j-1] as f64 / self.resolution as f64 * 2. * PI;
             }
-            hidden[i] = polar_dot_product(input, &normal) - (2. * self.parameters[i][0] as f64 / self.resolution as f64 - 1.) > 0.;
+            hidden[i] = polar_dot_product(input, &normal) - (2. * self.biases[i] as f64 / self.resolution as f64 - 1.) > 0.;
         }
         (self.output_layer)(&hidden)
     }

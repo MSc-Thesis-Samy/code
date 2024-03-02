@@ -1,7 +1,7 @@
 use neuroevolution::vneuron::*;
 use neuroevolution::discrete_vneuron::*;
-use neuroevolution::bna::*;
-use neuroevolution::traits::VNeuronTrait;
+use neuroevolution::benchmarks::*;
+use neuroevolution::traits::NeuroevolutionAlgorithm;
 
 fn main() {
     let mut vneuron = VNeuron::new(2);

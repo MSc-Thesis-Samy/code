@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 use rand::prelude::*;
 use rand_distr::{Exp, Distribution};
 use crate::utils::*;
-use crate::traits::VNeuronTrait;
+use crate::traits::NeuroevolutionAlgorithm;
 
 #[derive(Debug, Clone)]
 pub struct VNeuron {
@@ -52,28 +52,29 @@ impl VNeuron {
         }
     }
 
-    fn mutate_component(component: &mut f64) {
+    fn mutate_component(component: f64) -> f64 {
         let exp = Exp::new(1.).unwrap();
         let sign = if random::<f64>() < 0.5 { 1. } else { -1. };
-        *component += sign * exp.sample(&mut thread_rng());
-        *component -= component.floor();
+        let mut new_component = component + sign * exp.sample(&mut thread_rng());
+        new_component -= new_component.floor();
+        new_component
     }
 }
 
-impl VNeuronTrait for VNeuron {
+impl NeuroevolutionAlgorithm for VNeuron {
     fn optimize(&mut self, evaluation_function: fn(&VNeuron) -> f64, n_iters: u32) {
         for _ in 0..n_iters {
             let mut new_vneuron = self.clone();
             if random::<f64>() < 1. / 3. {
-                VNeuron::mutate_component(&mut new_vneuron.bend);
+                new_vneuron.bend = VNeuron::mutate_component(new_vneuron.bend);
             }
             for i in 0..self.dim-1 {
                 if random::<f64>() < 1. / 3. {
-                    VNeuron::mutate_component(&mut new_vneuron.angles[i]);
+                    new_vneuron.angles[i] = VNeuron::mutate_component(new_vneuron.angles[i]);
                 }
             }
             if random::<f64>() < 1. / 3. {
-                VNeuron::mutate_component(&mut new_vneuron.bias);
+                new_vneuron.bias = VNeuron::mutate_component(new_vneuron.bias);
             }
 
             if evaluation_function(&new_vneuron) > evaluation_function(self) {
@@ -87,10 +88,10 @@ impl VNeuronTrait for VNeuron {
         let bias = 2. * self.bias - 1.;
         normal[0] = 1.;
         for i in 1..self.dim {
-            normal[i] = self.angles[i - 1] * 2. * PI;
+            normal[i] = self.angles[i-1] * 2. * PI;
         }
 
-        let dot_product = polar_dot_product_vect(input, &normal) - bias;
+        let dot_product = polar_dot_product(input, &normal) - bias;
 
         if dot_product < 0. && self.bend * PI < PI / 2. {
             return false;
@@ -99,7 +100,7 @@ impl VNeuronTrait for VNeuron {
             return true;
         }
 
-        let norm = (polar_dot_product_vect(input, input) + bias * bias - 2. * bias * polar_dot_product_vect(input, &normal)).sqrt();
+        let norm = (polar_dot_product(input, input) + bias * bias - 2. * bias * polar_dot_product(input, &normal)).sqrt();
         let cos_angle = dot_product / norm;
         let angle = cos_angle.acos();
 

@@ -1,10 +1,10 @@
-use neuroevolution::oneplusone_na::*;
+use neuroevolution::benchmarks::*;
 use neuroevolution::network::Network;
 use neuroevolution::discrete_network::DiscreteNetwork;
-use neuroevolution::traits::NetworkTrait;
+use neuroevolution::traits::NeuroevolutionAlgorithm;
 
 fn main() {
-    let mut network = Network::<1, 2>::new();
+    let mut network = Network::new(1, 2);
 
     network.optimize(half, 1000);
     println!("half Fitness: {}", half(&network));
@@ -27,7 +27,7 @@ fn main() {
     // println!("cube Fitness: {}", cube(&network));
     // print!("{}", network);
 
-    let mut network = DiscreteNetwork::<1, 2>::new(1000);
+    let mut network = DiscreteNetwork::new(100, 1, 2);
 
     network.optimize(half, 1000);
     println!("half Fitness: {}", half(&network));

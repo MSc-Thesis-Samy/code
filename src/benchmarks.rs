@@ -1,57 +1,60 @@
 use std::f64::consts::PI;
-use crate::traits::NetworkTrait;
+use crate::traits::NeuroevolutionAlgorithm;
 
-const UNIT_CIRCLE_STEPS: u32 = 1000;
+const UNIT_CIRCLE_STEPS: u32 = 100;
 
-pub fn half<N, const M: usize>(network: &N) -> f64
+pub fn half<N>(alg: &N) -> f64
 where
-    N: NetworkTrait<M,2>,
+    N: NeuroevolutionAlgorithm,
 {
     let mut sum = 0;
-    for i in 0..UNIT_CIRCLE_STEPS {
+    for i in 0..UNIT_CIRCLE_STEPS - 1 {
         let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
-        let output = network.evaluate(&[1., angle]);
-        if output && angle < PI || !output && angle > PI {
+        let output = alg.evaluate(&vec![1., angle]);
+        if output && angle <= PI || !output && angle > PI {
             sum += 1;
         }
     }
-    sum as f64 / UNIT_CIRCLE_STEPS as f64
+
+    sum as f64 / (UNIT_CIRCLE_STEPS - 1) as f64
 }
 
-pub fn quarter<N, const M: usize>(network: &N) -> f64
+pub fn quarter<N>(alg: &N) -> f64
 where
-    N: NetworkTrait<M,2>,
+    N: NeuroevolutionAlgorithm,
 {
     let mut sum = 0;
-    for i in 0..UNIT_CIRCLE_STEPS {
+    for i in 0..UNIT_CIRCLE_STEPS - 1 {
         let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
-        let output = network.evaluate(&[1., angle]);
-        if output && angle < PI / 2. || !output && angle > PI / 2. {
+        let output = alg.evaluate(&vec![1., angle]);
+        if output && angle <= PI / 2. || !output && angle > PI / 2. {
             sum += 1;
         }
     }
-    sum as f64 / UNIT_CIRCLE_STEPS as f64
+
+    sum as f64 / (UNIT_CIRCLE_STEPS - 1) as f64
 }
 
-pub fn two_quarters<N, const M: usize>(network: &N) -> f64
+pub fn two_quarters<N>(alg: &N) -> f64
 where
-    N: NetworkTrait<M,2>,
+    N: NeuroevolutionAlgorithm,
 {
     let mut sum = 0;
-    for i in 0..UNIT_CIRCLE_STEPS {
+    for i in 0..UNIT_CIRCLE_STEPS - 1 {
         let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
-        let output = network.evaluate(&[1., angle]);
-        if output && (angle < PI / 2. || angle > PI && angle < 3. * PI / 2.)
+        let output = alg.evaluate(&vec![1., angle]);
+        if output && (angle <= PI / 2. || angle >= PI && angle <= 3. * PI / 2.)
         || !output && (angle > PI / 2. && angle < PI || angle > 3. * PI / 2.) {
             sum += 1;
         }
     }
-    sum as f64 / UNIT_CIRCLE_STEPS as f64
+
+    sum as f64 / (UNIT_CIRCLE_STEPS - 1) as f64
 }
 
-pub fn square<N, const M: usize>(network: &N) -> f64
+pub fn square<N>(alg: &N) -> f64
 where
-    N: NetworkTrait<M,2>,
+    N: NeuroevolutionAlgorithm,
 {
     let points_with_labels = [
         (1., PI / 4., true),
@@ -63,7 +66,7 @@ where
     points_with_labels
         .iter()
         .map(|&(r, theta, label)| {
-            let output = network.evaluate(&[r, theta]);
+            let output = alg.evaluate(&vec![r, theta]);
             if output && label || !output && !label {
                 1.
             } else {
@@ -73,9 +76,9 @@ where
         .sum::<f64>() / 4.
 }
 
-pub fn cube<N, const M: usize>(network: &N) -> f64
+pub fn scube<N>(alg: &N) -> f64
 where
-    N: NetworkTrait<M,3>,
+    N: NeuroevolutionAlgorithm
 {
     let points_with_labels = [
         (1., PI / 4., PI / 4., true),
@@ -91,7 +94,7 @@ where
     points_with_labels
         .iter()
         .map(|&(r, theta, phi, label)| {
-            let output = network.evaluate(&[r, theta, phi]);
+            let output = alg.evaluate(&vec![r, theta, phi]);
             if output && label || !output && !label {
                 1.
             } else {

@@ -2,7 +2,7 @@ use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
 use crate::utils::*;
-use crate::traits::VNeuronTrait;
+use crate::traits::NeuroevolutionAlgorithm;
 
 #[derive(Debug, Clone)]
 pub struct DiscreteVNeuron {
@@ -45,27 +45,27 @@ impl DiscreteVNeuron {
         }
     }
 
-    fn mutate_component(component: &mut u32, upper_bound: usize) {
+    fn mutate_component(component: u32, upper_bound: usize) -> u32 {
         let mut rng = thread_rng();
         let sign: i8 = if random::<f64>() < 0.5 { 1 } else { -1 };
-        *component = (*component as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, upper_bound) as i32 % upper_bound as i32) as u32;
+        (component as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, upper_bound) as i32 % upper_bound as i32) as u32
     }
 }
 
-impl VNeuronTrait for DiscreteVNeuron {
+impl NeuroevolutionAlgorithm for DiscreteVNeuron {
     fn optimize(&mut self, evaluation_function: fn(&DiscreteVNeuron) -> f64, n_iters: u32) {
         for _ in 0..n_iters {
             let mut new_vneuron = self.clone();
             if random::<f64>() < 1. / (self.dim + 1) as f64 {
-                DiscreteVNeuron::mutate_component(&mut new_vneuron.bend, self.resolution);
+                new_vneuron.bend = DiscreteVNeuron::mutate_component(self.bend, self.resolution);
             }
             for i in 0..self.dim-1 {
                 if random::<f64>() < 1. / (self.dim + 1) as f64 {
-                    DiscreteVNeuron::mutate_component(&mut new_vneuron.angles[i], self.resolution);
+                    new_vneuron.angles[i] = DiscreteVNeuron::mutate_component(self.angles[i], self.resolution);
                 }
             }
             if random::<f64>() < 1. / (self.dim + 1) as f64 {
-                DiscreteVNeuron::mutate_component(&mut new_vneuron.bias, self.resolution + 1);
+                new_vneuron.bias = DiscreteVNeuron::mutate_component(self.bias, self.resolution + 1);
             }
 
             if evaluation_function(&new_vneuron) > evaluation_function(self) {
@@ -82,7 +82,7 @@ impl VNeuronTrait for DiscreteVNeuron {
             normal[i] = self.angles[i - 1] as f64 / self.resolution as f64 * 2. * PI;
         }
 
-        let dot_product = polar_dot_product_vect(input, &normal) - bias;
+        let dot_product = polar_dot_product(input, &normal) - bias;
 
         if dot_product < 0. && self.bend as f64 / self.resolution as f64* PI < PI / 2. {
             return false;
@@ -91,7 +91,7 @@ impl VNeuronTrait for DiscreteVNeuron {
             return true;
         }
 
-        let norm = (polar_dot_product_vect(input, input) + bias * bias - 2. * bias * polar_dot_product_vect(input, &normal)).sqrt();
+        let norm = (polar_dot_product(input, input) + bias * bias - 2. * bias * polar_dot_product(input, &normal)).sqrt();
         let cos_angle = dot_product / norm;
         let angle = cos_angle.acos();
 
