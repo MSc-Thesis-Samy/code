@@ -2,6 +2,7 @@ use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
 use rand_distr::Exp;
+use cmaes::{DVector, fmax};
 use crate::utils::*;
 use crate::traits::NeuroevolutionAlgorithm;
 
@@ -56,19 +57,37 @@ impl Network {
         new_component
     }
 
-    // pub fn get_network(x: &DVector<f64>) -> Network {
-    //     let x: DVector<f64> = x.map(|x| x - x.floor());
-    //     let mut angles = [[0.;D];N];
-    //     for i in 0..N {
-    //         for j in 0..D {
-    //             angles[i][j] = x[i * D + j];
-    //         }
-    //     }
-    //     Network {
-    //         angles,
-    //         output_layer: |hidden: &[bool; N]| hidden.iter().any(|&x| x),
-    //     }
-    // }
+    fn to_network(x: &DVector<f64>, dim: usize, n_neurons: usize) -> Network {
+        let x: DVector<f64> = x.map(|x| x - x.floor());
+        let mut angles = vec![vec![0.; dim-1]; n_neurons];
+        for i in 0..n_neurons {
+            for j in 0..dim-1 {
+                angles[i][j] = x[i * dim + j];
+            }
+        }
+        let mut biases = vec![0.; n_neurons];
+        for i in 0..n_neurons {
+            biases[i] = x[(dim - 1) * n_neurons + i]
+        }
+        Network {
+            angles,
+            biases,
+            n_neurons,
+            dim,
+            output_layer: |hidden: &Vec<bool>| hidden.iter().any(|&x| x),
+        }
+    }
+
+    fn to_vector(&self) -> Vec<f64> {
+        let mut x = vec![0.; self.n_neurons * self.dim];
+        for i in 0..self.n_neurons {
+            for j in 0..self.dim-1 {
+                x[i * self.dim + j] = self.angles[i][j];
+            }
+        }
+        x.extend(self.biases.iter());
+        x
+    }
 }
 
 impl NeuroevolutionAlgorithm for Network {
@@ -88,6 +107,17 @@ impl NeuroevolutionAlgorithm for Network {
                 *self = new_network;
             }
         }
+    }
+
+    fn optimize_cmaes(&mut self, evaluation_function: fn(&Network) -> f64) {
+        let eval_fn = |x: &DVector<f64>| {
+            let network = Self::to_network(x, self.dim, self.n_neurons);
+            evaluation_function(&network)
+        };
+
+        let initial_solution = self.to_vector();
+        let solution = fmax(eval_fn, initial_solution, 1.);
+        *self = Self::to_network(&solution.point, self.dim, self.n_neurons);
     }
 
     fn evaluate(&self, input: &Vec<f64>) -> bool {

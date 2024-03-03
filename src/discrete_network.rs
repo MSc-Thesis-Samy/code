@@ -75,6 +75,10 @@ impl NeuroevolutionAlgorithm for DiscreteNetwork {
         }
     }
 
+    fn optimize_cmaes(&mut self, evaluation_function: fn(&Self) -> f64) {
+        unimplemented!()
+    }
+
     fn evaluate(&self, input: &Vec<f64>) -> bool {
         let mut hidden = vec![false; self.n_neurons];
         for i in 0..self.n_neurons {

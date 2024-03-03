@@ -32,4 +32,9 @@ fn main() {
     network.optimize(half, 1000);
     println!("half Fitness: {}", half(&network));
     print!("{}", network);
+
+    let mut network = Network::new(1, 2);
+    network.optimize_cmaes(half);
+    println!("half Fitness: {}", half(&network));
+    print!("{}", network);
 }

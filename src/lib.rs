@@ -1,4 +1,3 @@
-// pub mod cma_es;
 pub mod network;
 pub mod discrete_network;
 pub mod vneuron;

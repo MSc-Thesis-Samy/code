@@ -83,6 +83,10 @@ impl NeuroevolutionAlgorithm for VNeuron {
         }
     }
 
+    fn optimize_cmaes(&mut self, evaluation_function: fn(&Self) -> f64) {
+        unimplemented!()
+    }
+
     fn evaluate(&self, input: &Vec<f64>) -> bool {
         let mut normal = vec![0.; self.dim];
         let bias = 2. * self.bias - 1.;
