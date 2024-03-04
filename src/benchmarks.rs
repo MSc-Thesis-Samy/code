@@ -76,7 +76,7 @@ where
         .sum::<f64>() / 4.
 }
 
-pub fn scube<N>(alg: &N) -> f64
+pub fn cube<N>(alg: &N) -> f64
 where
     N: NeuroevolutionAlgorithm
 {

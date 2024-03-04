@@ -121,7 +121,7 @@ impl NeuroevolutionAlgorithm for Network {
     }
 
     fn evaluate(&self, input: &Vec<f64>) -> bool {
-        let mut hidden = vec![false; self.dim];
+        let mut hidden = vec![false; self.n_neurons];
         for i in 0..self.n_neurons {
             let mut normal = vec![0.;self.dim];
             normal[0] = 1.;
