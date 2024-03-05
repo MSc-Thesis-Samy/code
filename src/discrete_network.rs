@@ -56,6 +56,14 @@ impl DiscreteNetwork {
         let sign: i8 = if random::<f64>() < 0.5 { 1 } else { -1 };
         (component as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, upper_bound) as i32 % upper_bound as i32) as u32
     }
+
+    fn get_bias(&self, i: usize) -> f64 {
+        2. * self.biases[i] as f64 / self.resolution as f64 - 1.
+    }
+
+    fn get_angle(&self, i: usize, j: usize) -> f64 {
+        self.angles[i][j] as f64 / self.resolution as f64 * 2. * PI
+    }
 }
 
 impl NeuroevolutionAlgorithm for DiscreteNetwork {
@@ -75,6 +83,7 @@ impl NeuroevolutionAlgorithm for DiscreteNetwork {
         }
     }
 
+    #[allow(unused_variables)]
     fn optimize_cmaes(&mut self, evaluation_function: fn(&Self) -> f64) {
         unimplemented!()
     }
@@ -85,9 +94,14 @@ impl NeuroevolutionAlgorithm for DiscreteNetwork {
             let mut normal = vec![0.;self.dim];
             normal[0] = 1.;
             for j in 1..self.dim {
-                normal[j] = self.angles[i][j-1] as f64 / self.resolution as f64 * 2. * PI;
+                normal[j] = self.get_angle(i, j-1);
             }
-            hidden[i] = polar_dot_product(input, &normal) - (2. * self.biases[i] as f64 / self.resolution as f64 - 1.) > 0.;
+            if 2. * self.biases[i] as f64 / self.resolution as f64 - 1. >= 0. {
+                hidden[i] = polar_dot_product(input, &normal) - self.get_bias(i).abs() >= 0.;
+            }
+            else {
+                hidden[i] = polar_dot_product(input, &normal) - self.get_bias(i).abs() < 0.;
+            }
         }
         (self.output_layer)(&hidden)
     }

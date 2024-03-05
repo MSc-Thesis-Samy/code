@@ -7,7 +7,7 @@ const N_ITERS: u32 = 5000;
 const R: usize = 100;
 
 fn main() {
-    let mut network = Network::new(1, 2);
+    let mut network = Network::new(2, 2);
     network.optimize(half, N_ITERS);
     println!("half fitness: {:.2}", half(&network));
     print!("{:.2}", network);
@@ -35,4 +35,9 @@ fn main() {
     network.optimize_cmaes(half);
     println!("half fitness: {:.2}", half(&network));
     print!("{:.2}", network);
+
+    // let network = Network::from_parameters(
+    //     vec![2f64.sqrt() / 2., -2f64.sqrt() / 2.],
+    //     vec![vec![PI / 4.], vec![3. * PI / 4.]]
+    // );
 }

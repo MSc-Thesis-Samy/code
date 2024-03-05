@@ -43,9 +43,9 @@ impl VNeuron {
         }
     }
 
-    pub fn from_params(dim: usize, bias: f64, angles: Vec<f64>, bend: f64) -> Self {
+    pub fn from_parameters(bias: f64, angles: Vec<f64>, bend: f64) -> Self {
         Self {
-            dim,
+            dim: angles.len() + 1,
             bias: (bias + 1.) / 2.,
             angles: angles.iter().map(|x| x / (2. * PI)).collect(),
             bend: bend / PI,
@@ -58,6 +58,18 @@ impl VNeuron {
         let mut new_component = component + sign * exp.sample(&mut thread_rng());
         new_component -= new_component.floor();
         new_component
+    }
+
+    fn get_bias(&self) -> f64 {
+        2. * self.bias - 1.
+    }
+
+    fn get_angle(&self, i: usize) -> f64 {
+        self.angles[i] * 2. * PI
+    }
+
+    fn get_bend(&self) -> f64 {
+        self.bend * PI
     }
 }
 
@@ -83,31 +95,42 @@ impl NeuroevolutionAlgorithm for VNeuron {
         }
     }
 
+    #[allow(unused_variables)]
     fn optimize_cmaes(&mut self, evaluation_function: fn(&Self) -> f64) {
         unimplemented!()
     }
 
     fn evaluate(&self, input: &Vec<f64>) -> bool {
         let mut normal = vec![0.; self.dim];
-        let bias = 2. * self.bias - 1.;
+        let bias = self.get_bias();
         normal[0] = 1.;
         for i in 1..self.dim {
-            normal[i] = self.angles[i-1] * 2. * PI;
+            normal[i] = self.get_angle(i-1);
         }
 
         let dot_product = polar_dot_product(input, &normal) - bias;
 
-        if dot_product < 0. && self.bend * PI < PI / 2. {
-            return false;
+        if self.get_bias() >= 0. {
+            if dot_product < 0. && self.get_bend() < PI / 2. {
+                return false;
+            }
+            if dot_product >= 0. && self.get_bend()>= PI / 2. {
+                return true;
+            }
         }
-        if dot_product >= 0. && self.bend * PI >= PI / 2. {
-            return true;
+        else {
+            if dot_product < 0. && self.get_bend() >= PI / 2. {
+                return true;
+            }
+            if dot_product >= 0. && self.get_bend() < PI / 2. {
+                return false;
+            }
         }
 
-        let norm = (polar_dot_product(input, input) + bias * bias - 2. * bias * polar_dot_product(input, &normal)).sqrt();
+        let norm = (polar_dot_product(input, input) + bias * bias - 2. * bias.abs() * polar_dot_product(input, &normal)).sqrt();
         let cos_angle = dot_product / norm;
         let angle = cos_angle.acos();
 
-        angle <= self.bend * PI
+        angle <= self.get_bend()
     }
 }

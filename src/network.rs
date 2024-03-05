@@ -88,6 +88,29 @@ impl Network {
         x.extend(self.biases.iter());
         x
     }
+
+    pub fn from_parameters(biases: Vec<f64>, angles: Vec<Vec<f64>>) -> Self {
+        let n_neurons = biases.len();
+        let dim = angles[0].len() + 1;
+        let biases = biases.iter().map(|&x| (x + 1.) / 2.).collect();
+        let angles = angles.iter().map(|row| row.iter().map(|&x| x / 2. / PI).collect()).collect();
+
+        Self {
+            n_neurons,
+            dim,
+            biases,
+            angles,
+            output_layer: |hidden: &Vec<bool>| hidden.iter().any(|&x| x),
+        }
+    }
+
+    fn get_bias(&self, i: usize) -> f64 {
+        2. * self.biases[i] - 1.
+    }
+
+    fn get_angle(&self, i: usize, j: usize) -> f64 {
+        self.angles[i][j] * 2. * PI
+    }
 }
 
 impl NeuroevolutionAlgorithm for Network {
@@ -126,9 +149,13 @@ impl NeuroevolutionAlgorithm for Network {
             let mut normal = vec![0.;self.dim];
             normal[0] = 1.;
             for j in 1..self.dim {
-                normal[j] = self.angles[i][j-1] * 2. * PI;
+                normal[j] = self.get_angle(i, j-1);
             }
-            hidden[i] = polar_dot_product(input, &normal) - (2. * self.biases[i] - 1.) > 0.;
+            if self.get_bias(i) >= 0. {
+                hidden[i] = polar_dot_product(input, &normal) - self.get_bias(i).abs() >= 0.;
+            } else {
+                hidden[i] = polar_dot_product(input, &normal) - self.get_bias(i).abs() < 0.;
+            }
         }
         (self.output_layer)(&hidden)
     }
