@@ -19,12 +19,18 @@ fn main() {
     println!("two_quarters fitness: {:.2}", two_quarters(&vneuron));
     println!("Two Quarters: {}", vneuron);
 
-    vneuron.optimize(square, N_ITERS);
-    println!("square fitness: {:.2}", square(&vneuron));
-    println!("Square: {}", vneuron);
+    // vneuron.optimize(square, N_ITERS);
+    // println!("square fitness: {:.2}", square(&vneuron));
+    // println!("Square: {}", vneuron);
 
     let mut dvneuron = DiscreteVNeuron::new(2, 100);
     dvneuron.optimize(half, N_ITERS);
     println!("half fitness: {:.2}", half(&dvneuron));
     println!("Half: {}", dvneuron);
+
+    // let vneuron = VNeuron::from_parameters(
+    //     -0.5,
+    //     vec![3. * PI / 2.],
+    //     PI / 3.
+    // );
 }

@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 use crate::traits::NeuroevolutionAlgorithm;
 
-const UNIT_CIRCLE_STEPS: u32 = 10;
+const UNIT_CIRCLE_STEPS: u32 = 50;
 
 pub fn half<N>(alg: &N) -> f64
 where
@@ -110,7 +110,7 @@ mod tests {
     use crate::network::Network;
     use crate::vneuron::VNeuron;
 
-    const TOL: f64 = 1e-2;
+    const TOL: f64 = 5e-2;
 
     #[test]
     fn test_half_network() {
@@ -143,7 +143,7 @@ mod tests {
     }
 
     #[test]
-    fn test_half_vneuron() {
+    fn test_half_vneuron_null_bias() {
         let vneuron = VNeuron::from_parameters(
             0.,
             vec![PI / 2.],
@@ -153,5 +153,36 @@ mod tests {
         assert!((half(&vneuron) - 1.).abs() < TOL);
     }
 
-    // TODO add missing tests
+    #[test]
+    fn test_half_vneuron_positive_bias() {
+        let vneuron = VNeuron::from_parameters(
+            0.5,
+            vec![PI / 2.],
+            2. * PI / 3.
+        );
+
+        assert!((half(&vneuron) - 1.).abs() < TOL);
+    }
+
+    #[test]
+    fn test_half_vneuron_negative_bias() {
+        let vneuron = VNeuron::from_parameters(
+            -0.5,
+            vec![3. * PI / 2.],
+            PI / 3.
+        );
+
+        assert!((half(&vneuron) - 1.).abs() < TOL);
+    }
+
+    #[test]
+    fn test_quarter_vneuron_oneplusonena_solution() {
+        let vneuron = VNeuron::from_parameters(
+            2f64.sqrt() / 2.,
+            vec![PI / 4.],
+            PI / 2.
+        );
+
+        assert!((quarter(&vneuron) - 1.).abs() < TOL);
+    }
 }

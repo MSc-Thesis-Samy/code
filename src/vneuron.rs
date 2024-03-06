@@ -108,29 +108,16 @@ impl NeuroevolutionAlgorithm for VNeuron {
             normal[i] = self.get_angle(i-1);
         }
 
-        let dot_product = polar_dot_product(input, &normal) - bias;
-
-        if self.get_bias() >= 0. {
-            if dot_product < 0. && self.get_bend() < PI / 2. {
-                return false;
-            }
-            if dot_product >= 0. && self.get_bend()>= PI / 2. {
-                return true;
-            }
-        }
-        else {
-            if dot_product < 0. && self.get_bend() >= PI / 2. {
-                return true;
-            }
-            if dot_product >= 0. && self.get_bend() < PI / 2. {
-                return false;
-            }
-        }
-
+        let dot_product = polar_dot_product(input, &normal) - bias.abs();
         let norm = (polar_dot_product(input, input) + bias * bias - 2. * bias.abs() * polar_dot_product(input, &normal)).sqrt();
         let cos_angle = dot_product / norm;
         let angle = cos_angle.acos();
 
-        angle <= self.get_bend()
+        if bias >= 0. {
+            angle <= self.get_bend()
+        }
+        else {
+            PI - angle <= self.get_bend()
+        }
     }
 }

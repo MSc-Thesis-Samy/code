@@ -6,4 +6,4 @@
 * [ ] Remove code dupliation for benchmark functions
 * [X] Use vectors in (1+1) NA
 * [ ] Remove code duplication for algorithms
-* [ ] Add unit tests for bna and 1+1 na
+* [X] Add unit tests for bna and 1+1 na
