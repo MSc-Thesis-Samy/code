@@ -1,6 +1,7 @@
 use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
+use rand_distr::num_traits::Euclid;
 use crate::utils::*;
 use crate::traits::NeuroevolutionAlgorithm;
 
@@ -34,7 +35,7 @@ impl fmt::Display for DiscreteVNeuron {
 }
 
 impl DiscreteVNeuron {
-    pub fn new(dim: usize, resolution: usize) -> Self {
+    pub fn new(resolution: usize, dim: usize) -> Self {
         let mut rng = thread_rng();
         Self {
             resolution,
@@ -48,7 +49,7 @@ impl DiscreteVNeuron {
     fn mutate_component(component: u32, upper_bound: usize) -> u32 {
         let mut rng = thread_rng();
         let sign: i8 = if random::<f64>() < 0.5 { 1 } else { -1 };
-        (component as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, upper_bound) as i32 % upper_bound as i32) as u32
+        ((component as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, upper_bound) as i32).rem_euclid(upper_bound as i32)) as u32
     }
 
     fn get_bias(&self) -> f64 {

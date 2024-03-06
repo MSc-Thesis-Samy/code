@@ -77,15 +77,15 @@ impl NeuroevolutionAlgorithm for VNeuron {
     fn optimize(&mut self, evaluation_function: fn(&VNeuron) -> f64, n_iters: u32) {
         for _ in 0..n_iters {
             let mut new_vneuron = self.clone();
-            if random::<f64>() < 1. / 3. {
+            if random::<f64>() < 1. / (self.dim + 1) as f64  {
                 new_vneuron.bend = VNeuron::mutate_component(new_vneuron.bend);
             }
             for i in 0..self.dim-1 {
-                if random::<f64>() < 1. / 3. {
+                if random::<f64>() < 1. / (self.dim + 1) as f64 {
                     new_vneuron.angles[i] = VNeuron::mutate_component(new_vneuron.angles[i]);
                 }
             }
-            if random::<f64>() < 1. / 3. {
+            if random::<f64>() < 1. / (self.dim + 1) as f64 {
                 new_vneuron.bias = VNeuron::mutate_component(new_vneuron.bias);
             }
 

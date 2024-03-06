@@ -54,7 +54,7 @@ impl DiscreteNetwork {
     fn mutate_component(component: u32, upper_bound: usize) -> u32 {
         let mut rng = thread_rng();
         let sign: i8 = if random::<f64>() < 0.5 { 1 } else { -1 };
-        (component as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, upper_bound) as i32 % upper_bound as i32) as u32
+        ((component as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, upper_bound) as i32).rem_euclid(upper_bound as i32)) as u32
     }
 
     fn get_bias(&self, i: usize) -> f64 {

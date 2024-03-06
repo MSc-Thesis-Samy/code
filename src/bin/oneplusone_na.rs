@@ -30,6 +30,12 @@ fn main() {
     network.optimize(half, N_ITERS);
     println!("half fitness: {:.2}", half(&network));
     print!("{:.2}", network);
+    network.optimize(quarter, N_ITERS);
+    println!("quarter fitness: {:.2}", quarter(&network));
+    print!("{:.2}", network);
+    network.optimize(two_quarters, N_ITERS);
+    println!("two_quarters fitness: {:.2}", two_quarters(&network));
+    print!("{:.2}", network);
 
     let mut network = Network::new(1, 2);
     network.optimize_cmaes(half);

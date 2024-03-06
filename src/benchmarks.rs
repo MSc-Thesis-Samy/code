@@ -1,7 +1,23 @@
 use std::f64::consts::PI;
 use crate::traits::NeuroevolutionAlgorithm;
 
-const UNIT_CIRCLE_STEPS: u32 = 50;
+const UNIT_CIRCLE_STEPS: u32 = 100;
+
+pub fn full<N>(alg: &N) -> f64
+where
+    N: NeuroevolutionAlgorithm,
+{
+    let mut sum = 0;
+    for i in 0..UNIT_CIRCLE_STEPS {
+        let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
+        let output = alg.evaluate(&vec![1., angle]);
+        if output {
+            sum += 1;
+        }
+    }
+
+    sum as f64 / UNIT_CIRCLE_STEPS as f64
+}
 
 pub fn half<N>(alg: &N) -> f64
 where
@@ -184,5 +200,27 @@ mod tests {
         );
 
         assert!((quarter(&vneuron) - 1.).abs() < TOL);
+    }
+
+    #[test]
+    fn test_full_vneuron_null_bias() {
+        let vneuron = VNeuron::from_parameters(
+            0.,
+            vec![PI / 2.],
+            PI
+        );
+
+        assert!((full(&vneuron) - 1.).abs() < TOL);
+    }
+
+    #[test]
+    fn test_full_vneuron_negative_bias() {
+        let vneuron = VNeuron::from_parameters(
+            -1.,
+            vec![PI / 2.],
+            PI / 2.
+        );
+
+        assert!((full(&vneuron) - 1.).abs() < TOL);
     }
 }
