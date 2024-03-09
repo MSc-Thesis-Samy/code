@@ -2,6 +2,9 @@ use rand::prelude::*;
 use rand_distr::Uniform;
 
 pub fn polar_dot_product(v1: &Vec<f64>, v2: &Vec<f64>) -> f64 {
+    // TODO cases for D > 2
+    assert!(v1.len() == 2);
+
     let (r1, angles1) = v1.split_first().unwrap();
     let (r2, angles2) = v2.split_first().unwrap();
 

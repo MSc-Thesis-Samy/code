@@ -1,7 +1,6 @@
 use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
-use rand_distr::num_traits::Euclid;
 use crate::utils::*;
 use crate::traits::NeuroevolutionAlgorithm;
 

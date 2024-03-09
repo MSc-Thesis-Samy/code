@@ -5,3 +5,4 @@ pub mod discrete_vneuron;
 pub mod utils;
 pub mod benchmarks;
 pub mod traits;
+pub mod cli;
