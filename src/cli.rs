@@ -1,4 +1,5 @@
 use clap::{Parser, ValueEnum};
+use crate::constants::*;
 
 #[derive(Parser)]
 #[command(about = "Neuroevolution framework", long_about = None)]
@@ -8,9 +9,9 @@ pub struct Cli {
     pub algorithm: Algorithm,
     #[arg(help = "the benchmark problem", value_enum)]
     pub problem: Problem,
-    #[arg(help = "Resolution, when applicable", short, long, default_value_t = 100)]
+    #[arg(help = "Resolution, when applicable", short, long, default_value_t = RESOLUTION)]
     pub resolution: usize,
-    #[arg(help = "Number of iterations", short, long, default_value_t = 1000)]
+    #[arg(help = "Number of iterations", short, long, default_value_t = N_ITERATIONS)]
     pub iterations: u32,
     #[arg(help = "Use the continuous version of the algorithm, when applicable", short, long)]
     pub continuous: bool,
