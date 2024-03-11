@@ -2,7 +2,7 @@ use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
 use crate::utils::*;
-use crate::traits::NeuroevolutionAlgorithm;
+use crate::neuroevolution_algorithm::*;
 
 #[derive(Debug, Clone)]
 pub struct DiscreteNetwork {
@@ -67,7 +67,7 @@ impl DiscreteNetwork {
 }
 
 impl NeuroevolutionAlgorithm for DiscreteNetwork {
-    fn optimize(&mut self, evaluation_function: fn(&DiscreteNetwork) -> f64, n_iters: u32) {
+    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
         for _ in 0..n_iters {
             let mut new_network = self.clone();
             for i in 0..self.n_neurons {
@@ -77,14 +77,14 @@ impl NeuroevolutionAlgorithm for DiscreteNetwork {
                 }
             }
 
-            if evaluation_function(&new_network) > evaluation_function(self) {
+            if evaluation_function(&Algorithm::DiscreteOneplusoneNA(new_network.clone())) > evaluation_function(&Algorithm::DiscreteOneplusoneNA(self.clone())) {
                 *self = new_network;
             }
         }
     }
 
     #[allow(unused_variables)]
-    fn optimize_cmaes(&mut self, evaluation_function: fn(&Self) -> f64) {
+    fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
         unimplemented!()
     }
 

@@ -1,7 +1,7 @@
 use neuroevolution::benchmarks::*;
 use neuroevolution::network::Network;
 use neuroevolution::discrete_network::DiscreteNetwork;
-use neuroevolution::traits::NeuroevolutionAlgorithm;
+use neuroevolution::neuroevolution_algorithm::NeuroevolutionAlgorithm;
 use neuroevolution::constants::*;
 
 fn main() {

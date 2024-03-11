@@ -4,7 +4,7 @@ use rand::prelude::*;
 use rand_distr::Exp;
 use cmaes::{DVector, fmax};
 use crate::utils::*;
-use crate::traits::NeuroevolutionAlgorithm;
+use crate::neuroevolution_algorithm::*;
 
 #[derive(Debug, Clone)]
 pub struct Network {
@@ -114,7 +114,7 @@ impl Network {
 }
 
 impl NeuroevolutionAlgorithm for Network {
-    fn optimize(&mut self, evaluation_function: fn(&Network) -> f64, n_iters: u32) {
+    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
         for _ in 0..n_iters {
             let mut new_network = self.clone();
             for i in 0..self.n_neurons {
@@ -126,16 +126,16 @@ impl NeuroevolutionAlgorithm for Network {
                 }
             }
 
-            if evaluation_function(&new_network) > evaluation_function(self) {
+            if evaluation_function(&Algorithm::ContinuousOneplusoneNA(new_network.clone())) > evaluation_function(&Algorithm::ContinuousOneplusoneNA(self.clone())) {
                 *self = new_network;
             }
         }
     }
 
-    fn optimize_cmaes(&mut self, evaluation_function: fn(&Network) -> f64) {
+    fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
         let eval_fn = |x: &DVector<f64>| {
             let network = Self::to_network(x, self.dim, self.n_neurons);
-            evaluation_function(&network)
+            evaluation_function(&Algorithm::ContinuousOneplusoneNA(network))
         };
 
         let initial_solution = self.to_vector();

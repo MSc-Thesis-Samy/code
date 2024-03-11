@@ -1,5 +1,5 @@
 use std::f64::consts::PI;
-use crate::traits::NeuroevolutionAlgorithm;
+use crate::neuroevolution_algorithm::*;
 
 const UNIT_CIRCLE_STEPS: u32 = 100;
 

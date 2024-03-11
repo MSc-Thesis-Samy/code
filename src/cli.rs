@@ -6,7 +6,7 @@ use crate::constants::*;
 #[command(version, about, long_about = None)]
 pub struct Cli {
     #[arg(help = "The algorithm to test", value_enum)]
-    pub algorithm: Algorithm,
+    pub algorithm: AlgorithmType,
     #[arg(help = "the benchmark problem", value_enum)]
     pub problem: Problem,
     #[arg(help = "Resolution, when applicable", short, long, default_value_t = RESOLUTION)]
@@ -22,7 +22,7 @@ pub struct Cli {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum Algorithm {
+pub enum AlgorithmType {
     Oneplusonena,
     Bna,
 }

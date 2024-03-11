@@ -2,7 +2,7 @@ use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
 use crate::utils::*;
-use crate::traits::NeuroevolutionAlgorithm;
+use crate::neuroevolution_algorithm::*;
 
 #[derive(Debug, Clone)]
 pub struct DiscreteVNeuron {
@@ -65,7 +65,7 @@ impl DiscreteVNeuron {
 }
 
 impl NeuroevolutionAlgorithm for DiscreteVNeuron {
-    fn optimize(&mut self, evaluation_function: fn(&DiscreteVNeuron) -> f64, n_iters: u32) {
+    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
         for _ in 0..n_iters {
             let mut new_vneuron = self.clone();
             if random::<f64>() < 1. / (self.dim + 1) as f64 {
@@ -80,14 +80,14 @@ impl NeuroevolutionAlgorithm for DiscreteVNeuron {
                 new_vneuron.bias = DiscreteVNeuron::mutate_component(self.bias, self.resolution + 1);
             }
 
-            if evaluation_function(&new_vneuron) > evaluation_function(self) {
+            if evaluation_function(&&Algorithm::DiscreteBNA(new_vneuron.clone())) > evaluation_function(&Algorithm::DiscreteBNA(self.clone())) {
                 *self = new_vneuron;
             }
         }
     }
 
     #[allow(unused_variables)]
-    fn optimize_cmaes(&mut self, evaluation_function: fn(&Self) -> f64) {
+    fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
         unimplemented!()
     }
 

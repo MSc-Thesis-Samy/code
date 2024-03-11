@@ -1,0 +1,46 @@
+use crate::network::Network;
+use crate::discrete_network::DiscreteNetwork;
+use crate::vneuron::VNeuron;
+use crate::discrete_vneuron::DiscreteVNeuron;
+
+pub trait NeuroevolutionAlgorithm {
+    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32);
+    fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64);
+    fn evaluate(&self, input: &Vec<f64>) -> bool;
+}
+
+pub enum Algorithm {
+    DiscreteOneplusoneNA(DiscreteNetwork),
+    ContinuousOneplusoneNA(Network),
+    DiscreteBNA(DiscreteVNeuron),
+    ContinuousBNA(VNeuron),
+}
+
+impl NeuroevolutionAlgorithm for Algorithm {
+    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
+        match self {
+            Algorithm::DiscreteOneplusoneNA(network) => network.optimize(evaluation_function, n_iters),
+            Algorithm::ContinuousOneplusoneNA(network) => network.optimize(evaluation_function, n_iters),
+            Algorithm::DiscreteBNA(vneuron) => vneuron.optimize(evaluation_function, n_iters),
+            Algorithm::ContinuousBNA(vneuron) => vneuron.optimize(evaluation_function, n_iters),
+        }
+    }
+
+    fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+        match self {
+            Algorithm::DiscreteOneplusoneNA(network) => network.optimize_cmaes(evaluation_function),
+            Algorithm::ContinuousOneplusoneNA(network) => network.optimize_cmaes(evaluation_function),
+            Algorithm::DiscreteBNA(vneuron) => vneuron.optimize_cmaes(evaluation_function),
+            Algorithm::ContinuousBNA(vneuron) => vneuron.optimize_cmaes(evaluation_function),
+        }
+    }
+
+    fn evaluate(&self, input: &Vec<f64>) -> bool {
+        match self {
+            Algorithm::DiscreteOneplusoneNA(network) => network.evaluate(input),
+            Algorithm::ContinuousOneplusoneNA(network) => network.evaluate(input),
+            Algorithm::DiscreteBNA(vneuron) => vneuron.evaluate(input),
+            Algorithm::ContinuousBNA(vneuron) => vneuron.evaluate(input),
+        }
+    }
+}

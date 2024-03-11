@@ -4,6 +4,6 @@ pub mod vneuron;
 pub mod discrete_vneuron;
 pub mod utils;
 pub mod benchmarks;
-pub mod traits;
+pub mod neuroevolution_algorithm;
 pub mod cli;
 pub mod constants;
