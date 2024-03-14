@@ -74,24 +74,22 @@ impl VNeuron {
 }
 
 impl NeuroevolutionAlgorithm for VNeuron {
-    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
-        for _ in 0..n_iters {
-            let mut new_vneuron = self.clone();
-            if random::<f64>() < 1. / (self.dim + 1) as f64  {
-                new_vneuron.bend = VNeuron::mutate_component(new_vneuron.bend);
-            }
-            for i in 0..self.dim-1 {
-                if random::<f64>() < 1. / (self.dim + 1) as f64 {
-                    new_vneuron.angles[i] = VNeuron::mutate_component(new_vneuron.angles[i]);
-                }
-            }
+    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+        let mut new_vneuron = self.clone();
+        if random::<f64>() < 1. / (self.dim + 1) as f64  {
+            new_vneuron.bias = VNeuron::mutate_component(new_vneuron.bias);
+        }
+        for i in 0..self.dim-1 {
             if random::<f64>() < 1. / (self.dim + 1) as f64 {
-                new_vneuron.bias = VNeuron::mutate_component(new_vneuron.bias);
+                new_vneuron.angles[i] = VNeuron::mutate_component(new_vneuron.angles[i]);
             }
+        }
+        if random::<f64>() < 1. / (self.dim + 1) as f64 {
+            new_vneuron.bend = VNeuron::mutate_component(new_vneuron.bend);
+        }
 
-            if evaluation_function(&Algorithm::ContinuousBNA(new_vneuron.clone())) > evaluation_function(&Algorithm::ContinuousBNA(self.clone())) {
-                *self = new_vneuron;
-            }
+        if evaluation_function(&Algorithm::ContinuousBNA(&mut new_vneuron)) > evaluation_function(&Algorithm::ContinuousBNA(self)) {
+            *self = new_vneuron;
         }
     }
 

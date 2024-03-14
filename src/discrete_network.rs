@@ -67,19 +67,17 @@ impl DiscreteNetwork {
 }
 
 impl NeuroevolutionAlgorithm for DiscreteNetwork {
-    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
-        for _ in 0..n_iters {
-            let mut new_network = self.clone();
-            for i in 0..self.n_neurons {
-                new_network.biases[i] = DiscreteNetwork::mutate_component(self.biases[i], self.resolution + 1);
-                for j in 0..self.dim-1 {
-                    new_network.angles[i][j] = DiscreteNetwork::mutate_component(self.angles[i][j], self.resolution);
-                }
+    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+        let mut new_network = self.clone();
+        for i in 0..self.n_neurons {
+            new_network.biases[i] = DiscreteNetwork::mutate_component(self.biases[i], self.resolution + 1);
+            for j in 0..self.dim-1 {
+                new_network.angles[i][j] = DiscreteNetwork::mutate_component(self.angles[i][j], self.resolution);
             }
+        }
 
-            if evaluation_function(&Algorithm::DiscreteOneplusoneNA(new_network.clone())) > evaluation_function(&Algorithm::DiscreteOneplusoneNA(self.clone())) {
-                *self = new_network;
-            }
+        if evaluation_function(&Algorithm::DiscreteOneplusoneNA(&mut new_network)) > evaluation_function(&Algorithm::DiscreteOneplusoneNA(self)) {
+            *self = new_network;
         }
     }
 

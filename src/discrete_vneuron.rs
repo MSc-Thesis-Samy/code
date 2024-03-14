@@ -65,24 +65,22 @@ impl DiscreteVNeuron {
 }
 
 impl NeuroevolutionAlgorithm for DiscreteVNeuron {
-    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
-        for _ in 0..n_iters {
-            let mut new_vneuron = self.clone();
+    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+        let mut new_vneuron = self.clone();
+        if random::<f64>() < 1. / (self.dim + 1) as f64 {
+            new_vneuron.bend = DiscreteVNeuron::mutate_component(self.bend, self.resolution);
+        }
+        for i in 0..self.dim-1 {
             if random::<f64>() < 1. / (self.dim + 1) as f64 {
-                new_vneuron.bend = DiscreteVNeuron::mutate_component(self.bend, self.resolution);
+                new_vneuron.angles[i] = DiscreteVNeuron::mutate_component(self.angles[i], self.resolution);
             }
-            for i in 0..self.dim-1 {
-                if random::<f64>() < 1. / (self.dim + 1) as f64 {
-                    new_vneuron.angles[i] = DiscreteVNeuron::mutate_component(self.angles[i], self.resolution);
-                }
-            }
-            if random::<f64>() < 1. / (self.dim + 1) as f64 {
-                new_vneuron.bias = DiscreteVNeuron::mutate_component(self.bias, self.resolution + 1);
-            }
+        }
+        if random::<f64>() < 1. / (self.dim + 1) as f64 {
+            new_vneuron.bias = DiscreteVNeuron::mutate_component(self.bias, self.resolution + 1);
+        }
 
-            if evaluation_function(&&Algorithm::DiscreteBNA(new_vneuron.clone())) > evaluation_function(&Algorithm::DiscreteBNA(self.clone())) {
-                *self = new_vneuron;
-            }
+        if evaluation_function(&&Algorithm::DiscreteBNA(&mut new_vneuron)) > evaluation_function(&Algorithm::DiscreteBNA(self)) {
+            *self = new_vneuron;
         }
     }
 

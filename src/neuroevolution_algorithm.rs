@@ -4,19 +4,24 @@ use crate::vneuron::VNeuron;
 use crate::discrete_vneuron::DiscreteVNeuron;
 
 pub trait NeuroevolutionAlgorithm {
-    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32);
+    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64);
+    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
+        for _ in 0..n_iters {
+            self.optimization_step(evaluation_function);
+        }
+    }
     fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64);
     fn evaluate(&self, input: &Vec<f64>) -> bool;
 }
 
-pub enum Algorithm {
-    DiscreteOneplusoneNA(DiscreteNetwork),
-    ContinuousOneplusoneNA(Network),
-    DiscreteBNA(DiscreteVNeuron),
-    ContinuousBNA(VNeuron),
+pub enum Algorithm<'a> {
+    DiscreteOneplusoneNA(&'a mut DiscreteNetwork),
+    ContinuousOneplusoneNA(&'a mut Network),
+    DiscreteBNA(&'a mut DiscreteVNeuron),
+    ContinuousBNA(&'a mut VNeuron),
 }
 
-impl NeuroevolutionAlgorithm for Algorithm {
+impl NeuroevolutionAlgorithm for Algorithm<'_> {
     fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
         match self {
             Algorithm::DiscreteOneplusoneNA(network) => network.optimize(evaluation_function, n_iters),
@@ -41,6 +46,15 @@ impl NeuroevolutionAlgorithm for Algorithm {
             Algorithm::ContinuousOneplusoneNA(network) => network.evaluate(input),
             Algorithm::DiscreteBNA(vneuron) => vneuron.evaluate(input),
             Algorithm::ContinuousBNA(vneuron) => vneuron.evaluate(input),
+        }
+    }
+
+    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+        match self {
+            Algorithm::DiscreteOneplusoneNA(network) => network.optimization_step(evaluation_function),
+            Algorithm::ContinuousOneplusoneNA(network) => network.optimization_step(evaluation_function),
+            Algorithm::DiscreteBNA(vneuron) => vneuron.optimization_step(evaluation_function),
+            Algorithm::ContinuousBNA(vneuron) => vneuron.optimization_step(evaluation_function),
         }
     }
 }

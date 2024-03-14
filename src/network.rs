@@ -114,28 +114,26 @@ impl Network {
 }
 
 impl NeuroevolutionAlgorithm for Network {
-    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
-        for _ in 0..n_iters {
-            let mut new_network = self.clone();
-            for i in 0..self.n_neurons {
-                new_network.biases[i] = Network::mutate_component(self.biases[i]);
-                for j in 0..self.dim-1 {
-                    if random::<f64>() < 1. / (self.dim as f64 * self.n_neurons as f64) {
-                        new_network.angles[i][j] = Network::mutate_component(self.angles[i][j]);
-                    }
+    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+        let mut new_network = self.clone();
+        for i in 0..self.n_neurons {
+            new_network.biases[i] = Network::mutate_component(self.biases[i]);
+            for j in 0..self.dim-1 {
+                if random::<f64>() < 1. / (self.dim as f64 * self.n_neurons as f64) {
+                    new_network.angles[i][j] = Network::mutate_component(self.angles[i][j]);
                 }
             }
+        }
 
-            if evaluation_function(&Algorithm::ContinuousOneplusoneNA(new_network.clone())) > evaluation_function(&Algorithm::ContinuousOneplusoneNA(self.clone())) {
-                *self = new_network;
-            }
+        if evaluation_function(&Algorithm::ContinuousOneplusoneNA(&mut new_network)) > evaluation_function(&Algorithm::ContinuousOneplusoneNA(self)) {
+            *self = new_network;
         }
     }
 
     fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
         let eval_fn = |x: &DVector<f64>| {
-            let network = Self::to_network(x, self.dim, self.n_neurons);
-            evaluation_function(&Algorithm::ContinuousOneplusoneNA(network))
+            let mut network = Self::to_network(x, self.dim, self.n_neurons);
+            evaluation_function(&Algorithm::ContinuousOneplusoneNA(&mut network))
         };
 
         let initial_solution = self.to_vector();
