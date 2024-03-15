@@ -10,6 +10,17 @@ pub trait NeuroevolutionAlgorithm {
             self.optimization_step(evaluation_function);
         }
     }
+
+    // fn optimize_with_callback(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32)
+    // where
+    //     Self: std::fmt::Display
+    // {
+    //     for i in 0..n_iters {
+    //         self.optimization_step(evaluation_function);
+    //         println!("iteration: {}\nnetwork: {}", i, self);
+    //     }
+    // }
+
     fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64);
     fn evaluate(&self, input: &Vec<f64>) -> bool;
 }

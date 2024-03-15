@@ -1,111 +1,99 @@
 use std::f64::consts::PI;
 use crate::neuroevolution_algorithm::*;
+use crate::constants::UNIT_CIRCLE_STEPS;
 
-const UNIT_CIRCLE_STEPS: u32 = 100;
+pub type LabeledPoint = (Vec<f64>, bool);
+pub type LabeledPoints = Vec<LabeledPoint>;
+
+fn evaluate(alg: &Algorithm, points: &LabeledPoints) -> f64
+{
+    points
+        .iter()
+        .map(|(point, label)| {
+            let output = alg.evaluate(point);
+            if output && *label || !output && !*label {
+                1.
+            } else {
+                0.
+            }
+        })
+        .sum::<f64>() / points.len() as f64
+}
 
 pub fn full(alg: &Algorithm) -> f64
 {
-    let mut sum = 0;
-    for i in 0..UNIT_CIRCLE_STEPS {
-        let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
-        let output = alg.evaluate(&vec![1., angle]);
-        if output {
-            sum += 1;
-        }
-    }
+    let points = (0..UNIT_CIRCLE_STEPS)
+        .map(|i| {
+            let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
+            (vec![1., angle], true)
+        })
+        .collect::<LabeledPoints>();
 
-    sum as f64 / UNIT_CIRCLE_STEPS as f64
+    evaluate(alg, &points)
 }
 
 pub fn half(alg: &Algorithm) -> f64
 {
-    let mut sum = 0;
-    for i in 0..UNIT_CIRCLE_STEPS {
-        let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
-        let output = alg.evaluate(&vec![1., angle]);
-        if output && angle <= PI || !output && angle > PI {
-            sum += 1;
-        }
-    }
+    let points = (0..UNIT_CIRCLE_STEPS)
+        .map(|i| {
+            let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
+            (vec![1., angle], angle <= PI)
+        })
+        .collect::<LabeledPoints>();
 
-    sum as f64 / UNIT_CIRCLE_STEPS as f64
+    evaluate(alg, &points)
 }
 
 pub fn quarter(alg: &Algorithm) -> f64
 {
-    let mut sum = 0;
-    for i in 0..UNIT_CIRCLE_STEPS {
-        let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
-        let output = alg.evaluate(&vec![1., angle]);
-        if output && angle <= PI / 2. || !output && angle > PI / 2. {
-            sum += 1;
-        }
-    }
+    let points = (0..UNIT_CIRCLE_STEPS)
+        .map(|i| {
+            let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
+            (vec![1., angle], angle <= PI / 2.)
+        })
+        .collect::<LabeledPoints>();
 
-    sum as f64 / UNIT_CIRCLE_STEPS as f64
+    evaluate(alg, &points)
 }
 
 pub fn two_quarters(alg: &Algorithm) -> f64
 {
-    let mut sum = 0;
-    for i in 0..UNIT_CIRCLE_STEPS {
-        let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
-        let output = alg.evaluate(&vec![1., angle]);
-        if output && (angle <= PI / 2. || angle >= PI && angle <= 3. * PI / 2.)
-        || !output && (angle > PI / 2. && angle < PI || angle > 3. * PI / 2.) {
-            sum += 1;
-        }
-    }
+    let points = (0..UNIT_CIRCLE_STEPS)
+        .map(|i| {
+            let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
+            (vec![1., angle], angle <= PI / 2. || angle >= PI && angle <= 3. * PI / 2.)
+        })
+        .collect::<LabeledPoints>();
 
-    sum as f64 / UNIT_CIRCLE_STEPS as f64
+    evaluate(alg, &points)
 }
 
 pub fn square(alg: &Algorithm) -> f64
 {
-    let points_with_labels = [
-        (1., PI / 4., true),
-        (1., 3. * PI / 4., false),
-        (1., 5. * PI / 4., true),
-        (1., 7. * PI / 4., false),
+    let points: LabeledPoints = vec![
+        (vec![1., PI / 4.], true),
+        (vec![1., 3. * PI / 4.], false),
+        (vec![1., 5. * PI / 4.], true),
+        (vec![1., 7. * PI / 4.], false),
     ];
 
-    points_with_labels
-        .iter()
-        .map(|&(r, theta, label)| {
-            let output = alg.evaluate(&vec![r, theta]);
-            if output && label || !output && !label {
-                1.
-            } else {
-                0.
-            }
-        })
-        .sum::<f64>() / 4.
+    evaluate(alg, &points)
 }
 
 pub fn cube(alg: &Algorithm) -> f64
 {
-    let points_with_labels = [
-        (1., PI / 4., PI / 4., true),
-        (1., 3. * PI / 4., PI / 4., false),
-        (1., 5. * PI / 4., PI / 4., true),
-        (1., 7. * PI / 4., PI / 4., false),
-        (1., PI / 4., 3. * PI / 4., true),
-        (1., 3. * PI / 4., 3. * PI / 4., false),
-        (1., 5. * PI / 4., 3. * PI / 4., true),
-        (1., 7. * PI / 4., 3. * PI / 4., false),
+    let points = vec![
+        (vec![1., PI / 4., PI / 4.], true),
+        (vec![1., 3. * PI / 4., PI / 4.], false),
+        (vec![1., 5. * PI / 4., PI / 4.], true),
+        (vec![1., 7. * PI / 4., PI / 4.], false),
+        (vec![1., PI / 4., 3. * PI / 4.], true),
+        (vec![1., 3. * PI / 4., 3. * PI / 4.], false),
+        (vec![1., 5. * PI / 4., 3. * PI / 4.], true),
+        (vec![1., 7. * PI / 4., 3. * PI / 4.], false),
     ];
 
-    points_with_labels
-        .iter()
-        .map(|&(r, theta, phi, label)| {
-            let output = alg.evaluate(&vec![r, theta, phi]);
-            if output && label || !output && !label {
-                1.
-            } else {
-                0.
-            }
-        })
-        .sum::<f64>() / 8.
+    evaluate(alg, &points)
 }
 
 #[cfg(test)]
