@@ -23,32 +23,36 @@ fn main() {
                 AlgorithmType::Oneplusonena => {
                     match cli.continuous {
                         true => {
-                            let mut network = Network::new(cli.neurons, dim);
-                            network.optimize(problem, cli.iterations);
-                            println!("fitness: {:.2}", problem(&Algorithm::ContinuousOneplusoneNA(&mut network)));
-                            print!("Network: {}", network);
+                            let network = Network::new(cli.neurons, dim);
+                            let mut alg = Algorithm::ContinuousOneplusoneNA(network);
+                            alg.optimize(problem, cli.iterations);
+                            println!("fitness: {:.2}", problem(&alg));
+                            print!("{}", alg);
                         }
                         false => {
-                            let mut network = DiscreteNetwork::new(cli.resolution, cli.neurons, dim);
-                            network.optimize(problem, cli.iterations);
-                            println!("fitness: {:.2}", problem(&Algorithm::DiscreteOneplusoneNA(&mut network)));
-                            print!("DiscreteNetwork: {}", network);
+                            let network = DiscreteNetwork::new(cli.resolution, cli.neurons, dim);
+                            let mut alg = Algorithm::DiscreteOneplusoneNA(network);
+                            alg.optimize(problem, cli.iterations);
+                            println!("fitness: {:.2}", problem(&alg));
+                            print!("{}", alg);
                         }
                     }
                 },
                 AlgorithmType::Bna => {
                     match cli.continuous {
                         true => {
-                            let mut vneuron = VNeuron::new(dim);
-                            vneuron.optimize(problem, cli.iterations);
-                            println!("fitness: {:.2}", problem(&Algorithm::ContinuousBNA(&mut vneuron)));
-                            println!("VNeuron: {}", vneuron);
+                            let vneuron = VNeuron::new(dim);
+                            let mut alg = Algorithm::ContinuousBNA(vneuron);
+                            alg.optimize(problem, cli.iterations);
+                            println!("fitness: {:.2}", problem(&alg));
+                            print!("{}", alg);
                         },
                         false => {
-                            let mut vneuron = DiscreteVNeuron::new(cli.resolution, dim);
-                            vneuron.optimize(problem, cli.iterations);
-                            println!("fitness: {:.2}", problem(&Algorithm::DiscreteBNA(&mut vneuron)));
-                            println!("DiscreteVNeuron: {}", vneuron);
+                            let vneuron = DiscreteVNeuron::new(cli.resolution, dim);
+                            let mut alg = Algorithm::DiscreteBNA(vneuron);
+                            alg.optimize(problem, cli.iterations);
+                            println!("fitness: {:.2}", problem(&alg));
+                            print!("{}", alg);
                         }
                     }
                 }

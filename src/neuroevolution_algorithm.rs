@@ -25,14 +25,25 @@ pub trait NeuroevolutionAlgorithm {
     fn evaluate(&self, input: &Vec<f64>) -> bool;
 }
 
-pub enum Algorithm<'a> {
-    DiscreteOneplusoneNA(&'a mut DiscreteNetwork),
-    ContinuousOneplusoneNA(&'a mut Network),
-    DiscreteBNA(&'a mut DiscreteVNeuron),
-    ContinuousBNA(&'a mut VNeuron),
+pub enum Algorithm {
+    DiscreteOneplusoneNA(DiscreteNetwork),
+    ContinuousOneplusoneNA(Network),
+    DiscreteBNA(DiscreteVNeuron),
+    ContinuousBNA(VNeuron),
 }
 
-impl NeuroevolutionAlgorithm for Algorithm<'_> {
+impl std::fmt::Display for Algorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Algorithm::DiscreteOneplusoneNA(network) => write!(f, "{}", network),
+            Algorithm::ContinuousOneplusoneNA(network) => write!(f, "{}", network),
+            Algorithm::DiscreteBNA(vneuron) => write!(f, "{}", vneuron),
+            Algorithm::ContinuousBNA(vneuron) => write!(f, "{}", vneuron),
+        }
+    }
+}
+
+impl NeuroevolutionAlgorithm for Algorithm {
     fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
         match self {
             Algorithm::DiscreteOneplusoneNA(network) => network.optimize(evaluation_function, n_iters),

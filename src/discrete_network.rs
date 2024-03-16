@@ -76,7 +76,7 @@ impl NeuroevolutionAlgorithm for DiscreteNetwork {
             }
         }
 
-        if evaluation_function(&Algorithm::DiscreteOneplusoneNA(&mut new_network)) > evaluation_function(&Algorithm::DiscreteOneplusoneNA(self)) {
+        if evaluation_function(&Algorithm::DiscreteOneplusoneNA(new_network.clone())) > evaluation_function(&Algorithm::DiscreteOneplusoneNA(self.clone())) {
             *self = new_network;
         }
     }

@@ -88,7 +88,7 @@ impl NeuroevolutionAlgorithm for VNeuron {
             new_vneuron.bend = VNeuron::mutate_component(new_vneuron.bend);
         }
 
-        if evaluation_function(&Algorithm::ContinuousBNA(&mut new_vneuron)) > evaluation_function(&Algorithm::ContinuousBNA(self)) {
+        if evaluation_function(&Algorithm::ContinuousBNA(new_vneuron.clone())) > evaluation_function(&Algorithm::ContinuousBNA(self.clone())) {
             *self = new_vneuron;
         }
     }

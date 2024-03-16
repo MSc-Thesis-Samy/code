@@ -1,9 +1,18 @@
+use std::f64::consts::PI;
 use std::fs::File;
 use ggez::*;
 use neuroevolution::gui::*;
+use neuroevolution::network::Network;
+use neuroevolution::neuroevolution_algorithm::Algorithm;
 
 fn main() {
-    let state = State {};
+    let network = Network::from_parameters(
+        vec![0.],
+        vec![vec![PI / 2.]]
+    );
+
+    let algorithm = Algorithm::ContinuousOneplusoneNA(network);
+    let state = State::new(algorithm);
 
     let mut conf_file = File::open("gui_conf.toml").unwrap();
     let conf = conf::Conf::from_toml_file(&mut conf_file).unwrap();

@@ -125,15 +125,15 @@ impl NeuroevolutionAlgorithm for Network {
             }
         }
 
-        if evaluation_function(&Algorithm::ContinuousOneplusoneNA(&mut new_network)) > evaluation_function(&Algorithm::ContinuousOneplusoneNA(self)) {
+        if evaluation_function(&Algorithm::ContinuousOneplusoneNA(new_network.clone())) > evaluation_function(&Algorithm::ContinuousOneplusoneNA(self.clone())) {
             *self = new_network;
         }
     }
 
     fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
         let eval_fn = |x: &DVector<f64>| {
-            let mut network = Self::to_network(x, self.dim, self.n_neurons);
-            evaluation_function(&Algorithm::ContinuousOneplusoneNA(&mut network))
+            let network = Self::to_network(x, self.dim, self.n_neurons);
+            evaluation_function(&Algorithm::ContinuousOneplusoneNA(network))
         };
 
         let initial_solution = self.to_vector();
