@@ -3,16 +3,25 @@ use std::fs::File;
 use ggez::*;
 use neuroevolution::gui::*;
 use neuroevolution::network::Network;
-use neuroevolution::neuroevolution_algorithm::Algorithm;
+use neuroevolution::neuroevolution_algorithm::*;
+use neuroevolution::constants::*;
+use neuroevolution::benchmarks::*;
 
 fn main() {
-    let network = Network::from_parameters(
-        vec![0.],
-        vec![vec![PI / 2.]]
-    );
+    let network = Network::new(1, 2);
+    let mut alg = Algorithm::ContinuousOneplusoneNA(network);
+    alg.optimize(half, N_ITERATIONS);
 
-    let algorithm = Algorithm::ContinuousOneplusoneNA(network);
-    let state = State::new(algorithm);
+    // let points = (0..UNIT_CIRCLE_STEPS)
+    //     .map(|i| {
+    //         let angle = 2. * PI * i as f64 / UNIT_CIRCLE_STEPS as f64;
+    //         (vec![1., angle], angle <= PI)
+    //     })
+    //     .collect::<LabeledPoints>();
+
+    let points = LabeledPoints::new();
+
+    let state = State::new(alg, points);
 
     let mut conf_file = File::open("gui_conf.toml").unwrap();
     let conf = conf::Conf::from_toml_file(&mut conf_file).unwrap();
