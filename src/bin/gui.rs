@@ -1,16 +1,21 @@
 use std::fs::File;
 use ggez::*;
+use neuroevolution::network::Network;
 use neuroevolution::discrete_network::DiscreteNetwork;
+use neuroevolution::vneuron::VNeuron;
+use neuroevolution::discrete_vneuron::DiscreteVNeuron;
 use neuroevolution::gui::*;
 use neuroevolution::neuroevolution_algorithm::*;
 use neuroevolution::constants::*;
 use neuroevolution::benchmarks::*;
 
 fn main() {
-    let network = DiscreteNetwork::new(RESOLUTION, 2, 2);
-    let alg = Algorithm::DiscreteOneplusoneNA(network);
+    // let network = DiscreteNetwork::new(RESOLUTION, 1, 2);
+    // let alg = Algorithm::DiscreteOneplusoneNA(network);
+    let vneuron = DiscreteVNeuron::new(RESOLUTION, 2);
+    let alg = Algorithm::DiscreteBNA(vneuron);
 
-    let state = State::new(alg, two_quarters, N_ITERATIONS);
+    let state = State::new(alg, half, N_ITERATIONS);
 
     let mut conf_file = File::open("gui_conf.toml").unwrap();
     let conf = conf::Conf::from_toml_file(&mut conf_file).unwrap();

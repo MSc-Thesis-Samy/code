@@ -60,15 +60,15 @@ impl VNeuron {
         new_component
     }
 
-    fn get_bias(&self) -> f64 {
+    pub fn get_bias(&self) -> f64 {
         2. * self.bias - 1.
     }
 
-    fn get_angle(&self, i: usize) -> f64 {
+    pub fn get_angle(&self, i: usize) -> f64 {
         self.angles[i] * 2. * PI
     }
 
-    fn get_bend(&self) -> f64 {
+    pub fn get_bend(&self) -> f64 {
         self.bend * PI
     }
 }

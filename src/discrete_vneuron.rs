@@ -51,15 +51,15 @@ impl DiscreteVNeuron {
         ((component as i32 + sign as i32 * sample_harmonic_distribution(&mut rng, upper_bound) as i32).rem_euclid(upper_bound as i32)) as u32
     }
 
-    fn get_bias(&self) -> f64 {
+    pub fn get_bias(&self) -> f64 {
         2. * self.bias as f64 / self.resolution as f64 - 1.
     }
 
-    fn get_angle(&self, i: usize) -> f64 {
+    pub fn get_angle(&self, i: usize) -> f64 {
         self.angles[i] as f64 / self.resolution as f64 * 2. * PI
     }
 
-    fn get_bend(&self) -> f64 {
+    pub fn get_bend(&self) -> f64 {
         self.bend as f64 / self.resolution as f64 * PI
     }
 }
