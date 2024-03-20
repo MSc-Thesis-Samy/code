@@ -64,6 +64,14 @@ impl DiscreteNetwork {
     fn get_angle(&self, i: usize, j: usize) -> f64 {
         self.angles[i][j] as f64 / self.resolution as f64 * 2. * PI
     }
+
+    pub fn get_biases(&self) -> Vec<f64> {
+        self.biases.iter().map(|&x| 2. * x as f64 / self.resolution as f64 - 1.).collect()
+    }
+
+    pub fn get_angles(&self) -> Vec<Vec<f64>> {
+        self.angles.iter().map(|row| row.iter().map(|&x| x as f64 / self.resolution as f64 * 2. * PI).collect()).collect()
+    }
 }
 
 impl NeuroevolutionAlgorithm for DiscreteNetwork {

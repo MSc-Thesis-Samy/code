@@ -1,17 +1,21 @@
-use std::f64::consts::PI;
 use ggez::*;
-use crate::benchmarks::LabeledPoints;
-use crate::constants::UNIT_CIRCLE_STEPS;
-use crate::neuroevolution_algorithm::Algorithm;
+use crate::neuroevolution_algorithm::*;
 
 pub struct State {
     alg: Algorithm,
-    points: LabeledPoints,
+    problem: fn(&Algorithm) -> f64,
+    n_iters: u32,
+    iteration: u32,
 }
 
 impl State {
-    pub fn new(alg: Algorithm, points: LabeledPoints) -> Self {
-        State { alg, points }
+    pub fn new(alg: Algorithm, problem: fn(&Algorithm) -> f64, n_iters: u32) -> Self {
+        State {
+            alg,
+            problem,
+            n_iters,
+            iteration: 0,
+        }
     }
 
     fn polar_to_canvas(&self, v: &Vec<f64>) -> mint::Point2<f32> {
@@ -19,10 +23,53 @@ impl State {
         let y = v[0] * v[1].sin();
         mint::Point2{x: 400. + 250. * x as f32,y: 300. - 250. * y as f32}
     }
+
+    fn get_decision_line_mesh(
+        &self,
+        mesh: &mut graphics::MeshBuilder,
+        bias: f64,
+        theta: f64,
+        d_normal: f64,
+        d_hp: f64) -> GameResult
+    {
+        let r = (bias * bias + d_hp * d_hp).sqrt();
+        let theta1 = theta + (bias.abs() / r).acos();
+        let theta2 = theta - (bias.abs() / r).acos();
+
+        // normal
+        mesh.line(
+            &[
+                self.polar_to_canvas(&vec![bias.abs(), theta]),
+                self.polar_to_canvas(&vec![bias.abs() + if bias >= 0. {d_normal} else {-d_normal}, theta]),
+            ],
+            2.0,
+            graphics::Color::BLUE,
+        )?;
+
+        // hypotenuse
+        mesh.line(
+            &[
+                self.polar_to_canvas(&vec![r, theta1]),
+                self.polar_to_canvas(&vec![r, theta2]),
+            ],
+            2.0,
+            graphics::Color::BLACK,
+        )?;
+
+        Ok(())
+    }
 }
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        if self.iteration < self.n_iters {
+            if self.iteration % 100 == 0 {
+                println!("Iteration: {}", self.iteration);
+            }
+            self.alg.optimization_step(self.problem);
+            self.iteration += 1;
+        }
+
         Ok(())
     }
 
@@ -48,42 +95,33 @@ impl ggez::event::EventHandler<GameError> for State {
                     let theta = bends[i][0];
                     let d_hp = 1.;
                     let d_normal = 0.1;
-                    let r = (bias * bias + d_hp * d_hp).sqrt();
-                    let theta1 = theta + (bias.abs() / r).acos();
-                    let theta2 = theta - (bias.abs() / r).acos();
 
-                    // normal
-                    mesh.line(
-                        &[
-                            self.polar_to_canvas(&vec![bias.abs(), theta]),
-                            self.polar_to_canvas(&vec![bias.abs() + if bias >= 0. {d_normal} else {-d_normal}, theta]),
-                        ],
-                        2.0,
-                        graphics::Color::BLUE,
-                    )?;
+                    self.get_decision_line_mesh(mesh, bias, theta, d_normal, d_hp)?;
+                }
+            }
+            Algorithm::DiscreteOneplusoneNA(network) => {
+                let bends = network.get_angles();
+                let biases = network.get_biases();
+                for i in 0..bends.len() {
+                    let bias = biases[i];
+                    let theta = bends[i][0];
+                    let d_hp = 1.;
+                    let d_normal = 0.1;
 
-                    // hypotenuse
-                    mesh.line(
-                        &[
-                            self.polar_to_canvas(&vec![r, theta1]),
-                            self.polar_to_canvas(&vec![r, theta2]),
-                        ],
-                        2.0,
-                        graphics::Color::BLACK,
-                    )?;
+                    self.get_decision_line_mesh(mesh, bias, theta, d_normal, d_hp)?;
                 }
             }
             _ => {}
         }
 
-        for (point, label) in &self.points {
-            let point = self.polar_to_canvas(point);
-            mesh.rectangle(
-                graphics::DrawMode::fill(),
-                graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
-                if *label { graphics::Color::GREEN } else { graphics::Color::RED },
-            )?;
-        }
+        // for (point, label) in &self.points {
+        //     let point = self.polar_to_canvas(point);
+        //     mesh.rectangle(
+        //         graphics::DrawMode::fill(),
+        //         graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
+        //         if *label { graphics::Color::GREEN } else { graphics::Color::RED },
+        //     )?;
+        // }
 
         let mesh = graphics::Mesh::from_data(ctx, mesh.build());
 
