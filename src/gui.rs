@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use ggez::*;
 use crate::neuroevolution_algorithm::*;
 
@@ -100,7 +101,7 @@ impl State {
                     State::cartesian_rotation(
                         State::to_cartesian(&vec![bias.abs(), theta]),
                         State::to_cartesian(&vec![bias.abs() + d_bend, theta]),
-                        bend,
+                        if bias >= 0. {bend} else {PI - bend},
                     )
                 )
             ],
@@ -115,7 +116,7 @@ impl State {
                     State::cartesian_rotation(
                         State::to_cartesian(&vec![bias.abs(), theta]),
                         State::to_cartesian(&vec![bias.abs() + d_bend, theta]),
-                        -bend,
+                        if bias >= 0. {-bend} else {PI + bend},
                     )
                 )
             ],

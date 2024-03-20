@@ -15,7 +15,7 @@ fn main() {
     let vneuron = DiscreteVNeuron::new(RESOLUTION, 2);
     let alg = Algorithm::DiscreteBNA(vneuron);
 
-    let state = State::new(alg, half, N_ITERATIONS);
+    let state = State::new(alg, quarter, N_ITERATIONS);
 
     let mut conf_file = File::open("gui_conf.toml").unwrap();
     let conf = conf::Conf::from_toml_file(&mut conf_file).unwrap();
