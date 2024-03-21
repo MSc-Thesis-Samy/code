@@ -2,8 +2,10 @@ use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
 use rand_distr::{Exp, Distribution};
+use crate::benchmarks::ClassificationProblemEval;
 use crate::utils::*;
 use crate::neuroevolution_algorithm::*;
+use crate::benchmarks::SphereClassificationProblem;
 
 #[derive(Debug, Clone)]
 pub struct VNeuron {
@@ -74,7 +76,7 @@ impl VNeuron {
 }
 
 impl NeuroevolutionAlgorithm for VNeuron {
-    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+    fn optimization_step(&mut self, problem: &SphereClassificationProblem) {
         let mut new_vneuron = self.clone();
         if random::<f64>() < 1. / (self.dim + 1) as f64  {
             new_vneuron.bias = VNeuron::mutate_component(new_vneuron.bias);
@@ -88,13 +90,13 @@ impl NeuroevolutionAlgorithm for VNeuron {
             new_vneuron.bend = VNeuron::mutate_component(new_vneuron.bend);
         }
 
-        if evaluation_function(&Algorithm::ContinuousBNA(new_vneuron.clone())) > evaluation_function(&Algorithm::ContinuousBNA(self.clone())) {
+        if problem.evaluate(&Algorithm::ContinuousBNA(new_vneuron.clone())) > problem.evaluate(&Algorithm::ContinuousBNA(self.clone())) {
             *self = new_vneuron;
         }
     }
 
     #[allow(unused_variables)]
-    fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+    fn optimize_cmaes(&mut self, problem: &SphereClassificationProblem) {
         unimplemented!()
     }
 

@@ -2,26 +2,16 @@ use crate::network::Network;
 use crate::discrete_network::DiscreteNetwork;
 use crate::vneuron::VNeuron;
 use crate::discrete_vneuron::DiscreteVNeuron;
+use crate::benchmarks::SphereClassificationProblem;
 
 pub trait NeuroevolutionAlgorithm {
-    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64);
-    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
+    fn optimization_step(&mut self, problem: &SphereClassificationProblem);
+    fn optimize(&mut self, problem: &SphereClassificationProblem, n_iters: u32) {
         for _ in 0..n_iters {
-            self.optimization_step(evaluation_function);
+            self.optimization_step(problem);
         }
     }
-
-    // fn optimize_with_callback(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32)
-    // where
-    //     Self: std::fmt::Display
-    // {
-    //     for i in 0..n_iters {
-    //         self.optimization_step(evaluation_function);
-    //         println!("iteration: {}\nnetwork: {}", i, self);
-    //     }
-    // }
-
-    fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64);
+    fn optimize_cmaes(&mut self, problem: &SphereClassificationProblem);
     fn evaluate(&self, input: &Vec<f64>) -> bool;
 }
 
@@ -44,21 +34,21 @@ impl std::fmt::Display for Algorithm {
 }
 
 impl NeuroevolutionAlgorithm for Algorithm {
-    fn optimize(&mut self, evaluation_function: fn(&Algorithm) -> f64, n_iters: u32) {
+    fn optimize(&mut self, problem: &SphereClassificationProblem, n_iters: u32) {
         match self {
-            Algorithm::DiscreteOneplusoneNA(network) => network.optimize(evaluation_function, n_iters),
-            Algorithm::ContinuousOneplusoneNA(network) => network.optimize(evaluation_function, n_iters),
-            Algorithm::DiscreteBNA(vneuron) => vneuron.optimize(evaluation_function, n_iters),
-            Algorithm::ContinuousBNA(vneuron) => vneuron.optimize(evaluation_function, n_iters),
+            Algorithm::DiscreteOneplusoneNA(network) => network.optimize(problem, n_iters),
+            Algorithm::ContinuousOneplusoneNA(network) => network.optimize(problem, n_iters),
+            Algorithm::DiscreteBNA(vneuron) => vneuron.optimize(problem, n_iters),
+            Algorithm::ContinuousBNA(vneuron) => vneuron.optimize(problem, n_iters),
         }
     }
 
-    fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+    fn optimize_cmaes(&mut self, problem: &SphereClassificationProblem) {
         match self {
-            Algorithm::DiscreteOneplusoneNA(network) => network.optimize_cmaes(evaluation_function),
-            Algorithm::ContinuousOneplusoneNA(network) => network.optimize_cmaes(evaluation_function),
-            Algorithm::DiscreteBNA(vneuron) => vneuron.optimize_cmaes(evaluation_function),
-            Algorithm::ContinuousBNA(vneuron) => vneuron.optimize_cmaes(evaluation_function),
+            Algorithm::DiscreteOneplusoneNA(network) => network.optimize_cmaes(problem),
+            Algorithm::ContinuousOneplusoneNA(network) => network.optimize_cmaes(problem),
+            Algorithm::DiscreteBNA(vneuron) => vneuron.optimize_cmaes(problem),
+            Algorithm::ContinuousBNA(vneuron) => vneuron.optimize_cmaes(problem),
         }
     }
 
@@ -71,12 +61,12 @@ impl NeuroevolutionAlgorithm for Algorithm {
         }
     }
 
-    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+    fn optimization_step(&mut self, problem: &SphereClassificationProblem) {
         match self {
-            Algorithm::DiscreteOneplusoneNA(network) => network.optimization_step(evaluation_function),
-            Algorithm::ContinuousOneplusoneNA(network) => network.optimization_step(evaluation_function),
-            Algorithm::DiscreteBNA(vneuron) => vneuron.optimization_step(evaluation_function),
-            Algorithm::ContinuousBNA(vneuron) => vneuron.optimization_step(evaluation_function),
+            Algorithm::DiscreteOneplusoneNA(network) => network.optimization_step(problem),
+            Algorithm::ContinuousOneplusoneNA(network) => network.optimization_step(problem),
+            Algorithm::DiscreteBNA(vneuron) => vneuron.optimization_step(problem),
+            Algorithm::ContinuousBNA(vneuron) => vneuron.optimization_step(problem),
         }
     }
 }

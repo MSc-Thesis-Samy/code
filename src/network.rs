@@ -3,8 +3,10 @@ use std::f64::consts::PI;
 use rand::prelude::*;
 use rand_distr::Exp;
 use cmaes::{DVector, fmax};
+use crate::benchmarks::ClassificationProblemEval;
 use crate::utils::*;
 use crate::neuroevolution_algorithm::*;
+use crate::benchmarks::SphereClassificationProblem;
 
 #[derive(Debug, Clone)]
 pub struct Network {
@@ -122,7 +124,7 @@ impl Network {
 }
 
 impl NeuroevolutionAlgorithm for Network {
-    fn optimization_step(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+    fn optimization_step(&mut self, problem: &SphereClassificationProblem) {
         let mut new_network = self.clone();
         for i in 0..self.n_neurons {
             new_network.biases[i] = Network::mutate_component(self.biases[i]);
@@ -133,15 +135,15 @@ impl NeuroevolutionAlgorithm for Network {
             }
         }
 
-        if evaluation_function(&Algorithm::ContinuousOneplusoneNA(new_network.clone())) > evaluation_function(&Algorithm::ContinuousOneplusoneNA(self.clone())) {
+        if problem.evaluate(&Algorithm::ContinuousOneplusoneNA(new_network.clone())) > problem.evaluate(&Algorithm::ContinuousOneplusoneNA(self.clone())) {
             *self = new_network;
         }
     }
 
-    fn optimize_cmaes(&mut self, evaluation_function: fn(&Algorithm) -> f64) {
+    fn optimize_cmaes(&mut self, problem: &SphereClassificationProblem) {
         let eval_fn = |x: &DVector<f64>| {
             let network = Self::to_network(x, self.dim, self.n_neurons);
-            evaluation_function(&Algorithm::ContinuousOneplusoneNA(network))
+            problem.evaluate(&Algorithm::ContinuousOneplusoneNA(network))
         };
 
         let initial_solution = self.to_vector();

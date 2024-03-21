@@ -1,16 +1,17 @@
 use std::f64::consts::PI;
 use ggez::*;
 use crate::neuroevolution_algorithm::*;
+use crate::benchmarks::{SphereClassificationProblem, ClassificationProblemEval};
 
 pub struct State {
     alg: Algorithm,
-    problem: fn(&Algorithm) -> f64,
+    problem: SphereClassificationProblem,
     n_iters: u32,
     iteration: u32,
 }
 
 impl State {
-    pub fn new(alg: Algorithm, problem: fn(&Algorithm) -> f64, n_iters: u32) -> Self {
+    pub fn new(alg: Algorithm, problem: SphereClassificationProblem, n_iters: u32) -> Self {
         State {
             alg,
             problem,
@@ -27,7 +28,6 @@ impl State {
 
     fn cartesian_to_canvas(&self, (x, y): (f64, f64)) -> mint::Point2<f32> {
         mint::Point2{x: 400. + 250. * x as f32, y: 300. - 250. * y as f32}
-
     }
 
     fn polar_to_canvas(&self, v: &Vec<f64>) -> mint::Point2<f32> {
@@ -133,10 +133,10 @@ impl ggez::event::EventHandler<GameError> for State {
         if self.iteration < self.n_iters {
             if self.iteration % 100 == 0 {
                 println!("Iteration: {}", self.iteration);
-                println!("Fitness: {}", (self.problem)(&self.alg));
+                println!("Fitness: {}", self.problem.evaluate(&self.alg));
                 println!("Structure: {}", self.alg);
             }
-            self.alg.optimization_step(self.problem);
+            self.alg.optimization_step(&self.problem);
             self.iteration += 1;
         }
 
