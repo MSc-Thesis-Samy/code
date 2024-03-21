@@ -19,6 +19,8 @@ pub struct Cli {
     pub es: bool,
     #[arg(help = "Number of neurons, when applicable", short, long, default_value_t = 1)]
     pub neurons: usize,
+    #[arg(help = "Display visualization", short, long)]
+    pub gui: bool,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
@@ -31,5 +33,5 @@ pub enum AlgorithmType {
 pub enum Problem {
     Half,
     Quarter,
-    Twoquartes,
+    TwoQuarters,
 }
