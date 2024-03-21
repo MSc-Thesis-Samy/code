@@ -126,6 +126,19 @@ impl State {
 
         Ok(())
     }
+
+    fn get_problem_points_mesh(&self, mesh: &mut graphics::MeshBuilder) -> GameResult {
+        for (point, label) in &self.problem.get_points() {
+            let point = self.polar_to_canvas(point);
+            mesh.rectangle(
+                graphics::DrawMode::fill(),
+                graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
+                if *label { graphics::Color::GREEN } else { graphics::Color::RED },
+            )?;
+        }
+
+        Ok(())
+    }
 }
 
 impl ggez::event::EventHandler<GameError> for State {
@@ -197,14 +210,7 @@ impl ggez::event::EventHandler<GameError> for State {
             }
         }
 
-        // for (point, label) in &self.points {
-        //     let point = self.polar_to_canvas(point);
-        //     mesh.rectangle(
-        //         graphics::DrawMode::fill(),
-        //         graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
-        //         if *label { graphics::Color::GREEN } else { graphics::Color::RED },
-        //     )?;
-        // }
+        self.get_problem_points_mesh(mesh)?;
 
         let mesh = graphics::Mesh::from_data(ctx, mesh.build());
 
