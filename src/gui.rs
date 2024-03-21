@@ -144,11 +144,11 @@ impl State {
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
         if self.iteration < self.n_iters {
-            if self.iteration % 100 == 0 {
-                println!("Iteration: {}", self.iteration);
-                println!("Fitness: {}", self.problem.evaluate(&self.alg));
-                println!("Structure: {}", self.alg);
-            }
+            // if self.iteration % 100 == 0 {
+            //     println!("Iteration: {}", self.iteration);
+            //     println!("Fitness: {}", self.problem.evaluate(&self.alg));
+            //     println!("Structure: {}", self.alg);
+            // }
             self.alg.optimization_step(&self.problem);
             self.iteration += 1;
         }
@@ -210,11 +210,17 @@ impl ggez::event::EventHandler<GameError> for State {
             }
         }
 
+        let mut text = graphics::Text::new(format!("Iteration: {}\nFitness: {}", self.iteration, self.problem.evaluate(&self.alg)));
+
         self.get_problem_points_mesh(mesh)?;
 
         let mesh = graphics::Mesh::from_data(ctx, mesh.build());
 
         canvas.draw(&mesh, graphics::DrawParam::new());
+        canvas.draw(
+            text.set_scale(graphics::PxScale::from(30.0)),
+            graphics::DrawParam::from([10., 10.]).color(graphics::Color::BLACK),
+        );
         canvas.finish(ctx)?;
 
         Ok(())
