@@ -8,3 +8,4 @@ pub mod neuroevolution_algorithm;
 pub mod cli;
 pub mod constants;
 pub mod gui;
+pub mod neat;
