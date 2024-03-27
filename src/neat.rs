@@ -1,3 +1,5 @@
+use rand::prelude::*;
+
 #[derive(Clone, Debug)]
 pub enum NodeType {
     Input,
@@ -31,6 +33,11 @@ pub struct Genome {
 pub struct Individual {
     genome: Genome,
     fitness: f32,
+}
+
+pub struct History {
+    innovation: u32,
+    nodes_nb: u32,
 }
 
 impl NodeGene {
@@ -71,6 +78,28 @@ impl Individual {
     }
 
     fn mutate(&mut self) {
+        unimplemented!();
+    }
+
+    pub fn mutate_add_connection(&mut self) {
+        unimplemented!();
+    }
+
+    pub fn mutate_add_node(&mut self, history: &mut History) {
+        let new_node = NodeGene::new(history.nodes_nb + 1, NodeType::Hidden);
+        history.nodes_nb += 1;
+        self.genome.add_node(new_node.clone());
+
+        // TODO always pick an enable connection?
+        let connection = self.genome.connections.choose_mut(&mut thread_rng()).unwrap();
+        connection.enabled = false;
+
+        let in_to_new_node_connection = ConnectionGene::new(connection.in_node, new_node.id, 1.0, true, history.innovation + 1);
+        let new_to_out_node_connection = ConnectionGene::new(new_node.id, connection.out_node, connection.weight, true, connection.innovation);
+        self.genome.connections.push(in_to_new_node_connection); self.genome.connections.push(new_to_out_node_connection);
+    }
+
+    pub fn mutate_weights(&mut self) {
         unimplemented!();
     }
 
