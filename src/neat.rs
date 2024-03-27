@@ -1,4 +1,7 @@
+#![allow(dead_code)] // TODO remove
+
 use rand::prelude::*;
+use rand_distr::Normal;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NodeType {
@@ -41,30 +44,30 @@ pub struct History {
 }
 
 impl NodeGene {
-    pub fn new(id: u32, layer: NodeType) -> NodeGene {
+    fn new(id: u32, layer: NodeType) -> NodeGene {
         NodeGene { id, layer }
     }
 }
 
 impl ConnectionGene {
-    pub fn new(in_node: u32, out_node: u32, weight: f32, enabled: bool, innovation: u32) -> ConnectionGene {
+    fn new(in_node: u32, out_node: u32, weight: f32, enabled: bool, innovation: u32) -> ConnectionGene {
         ConnectionGene { in_node, out_node, weight, enabled, innovation }
     }
 }
 
 impl Genome {
-    pub fn new() -> Genome {
+    fn new() -> Genome {
         Genome {
             nodes: Vec::new(),
             connections: Vec::new(),
         }
     }
 
-    pub fn add_node(&mut self, node: NodeGene) {
+    fn add_node(&mut self, node: NodeGene) {
         self.nodes.push(node);
     }
 
-    pub fn add_connection(&mut self, connection: ConnectionGene) {
+    fn add_connection(&mut self, connection: ConnectionGene) {
         self.connections.push(connection);
     }
 
@@ -75,14 +78,14 @@ impl Genome {
 }
 
 impl Individual {
-    pub fn new(genome: Genome) -> Individual {
+    fn new(genome: Genome) -> Individual {
         Individual {
             genome,
             fitness: 0.0,
         }
     }
 
-    pub fn mutate_add_connection(&mut self, history: &mut History) {
+    fn mutate_add_connection(&mut self, history: &mut History) {
         let in_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Output).collect::<Vec<_>>();
         let out_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Input).collect::<Vec<_>>();
 
@@ -94,33 +97,38 @@ impl Individual {
             return;
         }
 
-        let weight = 1.0; // TODO random weight
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        let weight = normal.sample(&mut thread_rng());
+
         let connection = ConnectionGene::new(in_node.id, out_node.id, weight, true, history.innovation + 1);
         history.innovation += 1;
 
         self.genome.add_connection(connection);
     }
 
-    pub fn mutate_add_node(&mut self, history: &mut History) {
+    fn mutate_add_node(&mut self, history: &mut History) {
         let new_node = NodeGene::new(history.nodes_nb + 1, NodeType::Hidden);
         history.nodes_nb += 1;
         self.genome.add_node(new_node.clone());
 
-        // TODO always pick an enable connection?
+        // TODO always pick an enabled connection?
         let connection = self.genome.connections.choose_mut(&mut thread_rng()).unwrap();
         connection.enabled = false;
 
-        let in_to_new_node_connection = ConnectionGene::new(connection.in_node, new_node.id, 1.0, true, history.innovation + 1);
+        let in_to_new_node_connection = ConnectionGene::new(connection.in_node, new_node.id, 1., true, history.innovation + 1);
         history.innovation += 1;
         let new_to_out_node_connection = ConnectionGene::new(new_node.id, connection.out_node, connection.weight, true, connection.innovation);
         self.genome.connections.push(in_to_new_node_connection); self.genome.connections.push(new_to_out_node_connection);
     }
 
-    pub fn mutate_weights(&mut self) {
-        unimplemented!();
+    fn mutate_weights(&mut self) {
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        for connection in self.genome.connections.iter_mut() {
+            connection.weight += normal.sample(&mut thread_rng());
+        }
     }
 
-    pub fn crossover(parent1: &Individual, parent2: &Individual) -> Individual {
+    fn crossover(parent1: &Individual, parent2: &Individual) -> Individual {
         let merge_nodes = |p1: &[NodeGene], p2: &[NodeGene]| -> Vec<NodeGene> {
             let mut merged_nodes = Vec::new();
             let mut iter1 = p1.iter();
@@ -333,5 +341,24 @@ mod tests {
         let new_connection = individual.genome.connections.iter().find(|c| c.innovation == 1).unwrap();
         assert_eq!(new_connection.in_node, 1);
         assert_eq!(new_connection.out_node, 2);
+    }
+
+    #[test]
+    fn test_mutate_add_connection_already_connected_nodes() {
+        let node1 = NodeGene::new(1, NodeType::Input);
+        let node2 = NodeGene::new(2, NodeType::Output);
+        let connection = ConnectionGene::new(1, 2, 0., true, 1);
+        let mut genome = Genome::new();
+        genome.add_node(node1);
+        genome.add_node(node2);
+        genome.add_connection(connection);
+        let mut individual = Individual::new(genome);
+
+        let mut history = History { innovation: 1, nodes_nb: 2 };
+        individual.mutate_add_connection(&mut history);
+
+        assert_eq!(individual.genome.nodes.len(), 2);
+        assert_eq!(individual.genome.connections.len(), 1);
+        assert_eq!(history.innovation, 1);
     }
 }
