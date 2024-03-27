@@ -1,8 +1,5 @@
 use std::fs::File;
 use ggez::*;
-use neuroevolution::network::Network;
-use neuroevolution::discrete_network::DiscreteNetwork;
-use neuroevolution::vneuron::VNeuron;
 use neuroevolution::discrete_vneuron::DiscreteVNeuron;
 use neuroevolution::gui::*;
 use neuroevolution::neuroevolution_algorithm::*;

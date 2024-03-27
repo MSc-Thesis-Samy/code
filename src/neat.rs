@@ -1,6 +1,6 @@
 use rand::prelude::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NodeType {
     Input,
     Hidden,
@@ -11,7 +11,7 @@ pub enum NodeType {
 #[derive(Clone, Debug)]
 pub struct NodeGene {
     id: u32,
-    node_type: NodeType,
+    layer: NodeType,
 }
 
 #[derive(Clone, Debug)]
@@ -41,8 +41,8 @@ pub struct History {
 }
 
 impl NodeGene {
-    pub fn new(id: u32, node_type: NodeType) -> NodeGene {
-        NodeGene { id, node_type }
+    pub fn new(id: u32, layer: NodeType) -> NodeGene {
+        NodeGene { id, layer }
     }
 }
 
@@ -67,6 +67,11 @@ impl Genome {
     pub fn add_connection(&mut self, connection: ConnectionGene) {
         self.connections.push(connection);
     }
+
+    fn are_connected(&self, in_node: u32, out_node: u32) -> bool {
+        // TODO improve time complexity
+        self.connections.iter().any(|c| c.in_node == in_node && c.out_node == out_node)
+    }
 }
 
 impl Individual {
@@ -77,12 +82,23 @@ impl Individual {
         }
     }
 
-    fn mutate(&mut self) {
-        unimplemented!();
-    }
+    pub fn mutate_add_connection(&mut self, history: &mut History) {
+        let in_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Output).collect::<Vec<_>>();
+        let out_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Input).collect::<Vec<_>>();
 
-    pub fn mutate_add_connection(&mut self) {
-        unimplemented!();
+        // TODO only choose unconnected nodes?
+        let in_node = in_nodes.choose(&mut thread_rng()).unwrap();
+        let out_node = out_nodes.choose(&mut thread_rng()).unwrap();
+
+        if (in_node.layer == out_node.layer) || self.genome.are_connected(in_node.id, out_node.id) {
+            return;
+        }
+
+        let weight = 1.0; // TODO random weight
+        let connection = ConnectionGene::new(in_node.id, out_node.id, weight, true, history.innovation + 1);
+        history.innovation += 1;
+
+        self.genome.add_connection(connection);
     }
 
     pub fn mutate_add_node(&mut self, history: &mut History) {
@@ -95,6 +111,7 @@ impl Individual {
         connection.enabled = false;
 
         let in_to_new_node_connection = ConnectionGene::new(connection.in_node, new_node.id, 1.0, true, history.innovation + 1);
+        history.innovation += 1;
         let new_to_out_node_connection = ConnectionGene::new(new_node.id, connection.out_node, connection.weight, true, connection.innovation);
         self.genome.connections.push(in_to_new_node_connection); self.genome.connections.push(new_to_out_node_connection);
     }
@@ -184,6 +201,8 @@ impl Individual {
         let nodes = merge_nodes(&parent1.genome.nodes, &parent2.genome.nodes);
         let connections = merge_connections(&parent1.genome.connections, &parent2.genome.connections);
 
+        println!("{:?}", connections);
+
         Individual {
             genome: Genome {
                 nodes,
@@ -191,5 +210,128 @@ impl Individual {
             },
             fitness: 0.0, // TODO: calculate fitness
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_crossover() {
+        let node1 = NodeGene::new(1, NodeType::Input);
+        let node2 = NodeGene::new(2, NodeType::Input);
+        let node3 = NodeGene::new(3, NodeType::Input);
+        let node4 = NodeGene::new(4, NodeType::Output);
+        let node5 = NodeGene::new(5, NodeType::Hidden);
+        let node6 = NodeGene::new(6, NodeType::Hidden);
+
+        let conn_1_4 = ConnectionGene::new(1, 4, 1., true, 1);
+        let conn_2_4 = ConnectionGene::new(2, 4, 1., false, 2);
+        let conn_3_4 = ConnectionGene::new(3, 4, 1., true, 3);
+        let conn_2_5 = ConnectionGene::new(2, 5, 1., true, 4);
+        let conn_5_4 = ConnectionGene::new(5, 4, 1., true, 5);
+        let conn_1_5 = ConnectionGene::new(1, 5, 1., true, 8);
+        let conn_5_4_bis = ConnectionGene::new(5, 4, 1., false, 5);
+        let conn_5_6 = ConnectionGene::new(5, 6, 1., true, 6);
+        let conn_6_4 = ConnectionGene::new(6, 4, 1., true, 7);
+        let conn_3_5 = ConnectionGene::new(3, 5, 1., true, 9);
+        let conn_1_6 = ConnectionGene::new(1, 6, 1., true, 10);
+
+        let mut genome1 = Genome::new();
+        genome1.add_node(node1.clone());
+        genome1.add_node(node2.clone());
+        genome1.add_node(node3.clone());
+        genome1.add_node(node4.clone());
+        genome1.add_node(node5.clone());
+        genome1.add_connection(conn_1_4.clone());
+        genome1.add_connection(conn_2_4.clone());
+        genome1.add_connection(conn_3_4.clone());
+        genome1.add_connection(conn_2_5.clone());
+        genome1.add_connection(conn_5_4.clone());
+        genome1.add_connection(conn_1_5.clone());
+
+        let mut genome2 = Genome::new();
+        genome2.add_node(node1);
+        genome2.add_node(node2);
+        genome2.add_node(node3);
+        genome2.add_node(node4);
+        genome2.add_node(node5);
+        genome2.add_node(node6);
+        genome2.add_connection(conn_1_4);
+        genome2.add_connection(conn_2_4);
+        genome2.add_connection(conn_3_4);
+        genome2.add_connection(conn_2_5);
+        genome2.add_connection(conn_5_4_bis);
+        genome2.add_connection(conn_5_6);
+        genome2.add_connection(conn_6_4);
+        genome2.add_connection(conn_3_5);
+        genome2.add_connection(conn_1_6);
+
+        let mut parent1 = Individual::new(genome1);
+        let mut parent2 = Individual::new(genome2);
+
+        parent1.fitness = 1.0;
+        parent2.fitness = 0.;
+        let child = Individual::crossover(&parent1, &parent2);
+        assert_eq!(child.genome.nodes.len(), 6);
+        assert_eq!(child.genome.connections.len(), 6);
+
+        parent1.fitness = 0.;
+        parent2.fitness = 1.0;
+        let child = Individual::crossover(&parent1, &parent2);
+        assert_eq!(child.genome.nodes.len(), 6);
+        assert_eq!(child.genome.connections.len(), 9);
+    }
+
+    #[test]
+    fn test_mutate_add_node() {
+        let node1 = NodeGene::new(1, NodeType::Input);
+        let node2 = NodeGene::new(2, NodeType::Output);
+        let connection = ConnectionGene::new(1, 2, 0.5, true, 1);
+        let mut genome = Genome::new();
+        genome.add_node(node1);
+        genome.add_node(node2);
+        genome.add_connection(connection);
+        let mut individual = Individual::new(genome);
+
+        let mut history = History { innovation: 1, nodes_nb: 2 };
+        individual.mutate_add_node(&mut history);
+
+        assert_eq!(individual.genome.nodes.len(), 3);
+        assert_eq!(individual.genome.connections.len(), 3);
+        assert_eq!(history.nodes_nb, 3);
+        assert_eq!(history.innovation, 2);
+
+        let new_node = individual.genome.nodes.iter().find(|n| n.id == 3).unwrap();
+        assert_eq!(new_node.layer, NodeType::Hidden);
+
+        let old_connection = individual.genome.connections.iter().find(|c| c.in_node == 1 && c.out_node == 2).unwrap();
+        let in_new_node_connection = individual.genome.connections.iter().find(|c| c.in_node == 1 && c.out_node == 3).unwrap();
+        let new_out_node_connection = individual.genome.connections.iter().find(|c| c.in_node == 3 && c.out_node == 2).unwrap();
+        assert!(!old_connection.enabled);
+        assert_eq!(in_new_node_connection.weight, 1.);
+        assert_eq!(new_out_node_connection.weight, 0.5);
+    }
+
+    #[test]
+    fn test_mutate_add_connection() {
+        let node1 = NodeGene::new(1, NodeType::Input);
+        let node2 = NodeGene::new(2, NodeType::Output);
+        let mut genome = Genome::new();
+        genome.add_node(node1);
+        genome.add_node(node2);
+        let mut individual = Individual::new(genome);
+
+        let mut history = History { innovation: 0, nodes_nb: 2 };
+        individual.mutate_add_connection(&mut history);
+
+        assert_eq!(individual.genome.nodes.len(), 2);
+        assert_eq!(individual.genome.connections.len(), 1);
+        assert_eq!(history.innovation, 1);
+
+        let new_connection = individual.genome.connections.iter().find(|c| c.innovation == 1).unwrap();
+        assert_eq!(new_connection.in_node, 1);
+        assert_eq!(new_connection.out_node, 2);
     }
 }
