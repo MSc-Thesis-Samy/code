@@ -9,3 +9,4 @@ pub mod cli;
 pub mod constants;
 pub mod gui;
 pub mod neat;
+pub mod neural_network;

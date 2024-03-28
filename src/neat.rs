@@ -2,13 +2,13 @@
 
 use rand::prelude::*;
 use rand_distr::Normal;
+use crate::neural_network::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NodeType {
     Input,
     Hidden,
     Output,
-    Bias,
 }
 
 #[derive(Clone, Debug)]
@@ -219,6 +219,35 @@ impl Individual {
             fitness: 0.0, // TODO: calculate fitness
         }
     }
+
+    fn to_neural_network(&self) -> NeuralNetwork {
+        let input_ids = self.genome.nodes.iter().filter(|n| n.layer == NodeType::Input).map(|n| n.id).collect::<Vec<_>>();
+        let output_ids = self.genome.nodes.iter().filter(|n| n.layer == NodeType::Output).map(|n| n.id).collect::<Vec<_>>();
+
+        let mut neurons = Vec::new();
+
+        // Add input neurons
+        for input_id in input_ids.iter() {
+            let neuron = Neuron::new(*input_id, Vec::new());
+            neurons.push(neuron);
+        }
+
+        // Add hidden neurons
+        for node in self.genome.nodes.iter().filter(|n| n.layer == NodeType::Hidden) {
+            let inputs = self.genome.connections.iter().filter(|c| c.out_node == node.id && c.enabled).map(|c| NeuronInput::new(c.in_node, c.weight)).collect::<Vec<_>>();
+            let neuron = Neuron::new(node.id, inputs);
+            neurons.push(neuron);
+        }
+
+        // Add output neurons
+        for output_id in output_ids.iter() {
+            let inputs = self.genome.connections.iter().filter(|c| c.out_node == *output_id && c.enabled).map(|c| NeuronInput::new(c.in_node, c.weight)).collect::<Vec<_>>();
+            let neuron = Neuron::new(*output_id, inputs);
+            neurons.push(neuron);
+        }
+
+        NeuralNetwork::new(input_ids, output_ids, neurons)
+    }
 }
 
 #[cfg(test)]
@@ -360,5 +389,55 @@ mod tests {
         assert_eq!(individual.genome.nodes.len(), 2);
         assert_eq!(individual.genome.connections.len(), 1);
         assert_eq!(history.innovation, 1);
+    }
+
+    #[test]
+    fn test_network_conversion() {
+        let node1 = NodeGene::new(1, NodeType::Input);
+        let node2 = NodeGene::new(2, NodeType::Input);
+        let node3 = NodeGene::new(3, NodeType::Output);
+
+        let conn_1_3 = ConnectionGene::new(1, 3, 0.5, true, 1);
+        let conn_2_3 = ConnectionGene::new(2, 3, 0.5, true, 2);
+
+        let mut genome = Genome::new();
+        genome.add_node(node1);
+        genome.add_node(node2);
+        genome.add_node(node3);
+        genome.add_connection(conn_1_3);
+        genome.add_connection(conn_2_3);
+
+        let individual = Individual::new(genome);
+        let network = individual.to_neural_network();
+
+        let inputs = vec![1., 1.];
+        let outputs = network.feed_forward(inputs);
+
+        assert_eq!(outputs, vec![1.]);
+    }
+
+    #[test]
+    fn test_network_conversion_with_disabled_connection() {
+        let node1 = NodeGene::new(1, NodeType::Input);
+        let node2 = NodeGene::new(2, NodeType::Input);
+        let node3 = NodeGene::new(3, NodeType::Output);
+
+        let conn_1_3 = ConnectionGene::new(1, 3, 0.5, true, 1);
+        let conn_2_3 = ConnectionGene::new(2, 3, 0.5, false, 2);
+
+        let mut genome = Genome::new();
+        genome.add_node(node1);
+        genome.add_node(node2);
+        genome.add_node(node3);
+        genome.add_connection(conn_1_3);
+        genome.add_connection(conn_2_3);
+
+        let individual = Individual::new(genome);
+        let network = individual.to_neural_network();
+
+        let inputs = vec![1., 1.];
+        let outputs = network.feed_forward(inputs);
+
+        assert_eq!(outputs, vec![0.5]);
     }
 }
