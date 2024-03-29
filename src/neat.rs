@@ -5,20 +5,20 @@ use rand_distr::Normal;
 use crate::neural_network::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum NodeType {
+enum NodeType {
     Input,
     Hidden,
     Output,
 }
 
 #[derive(Clone, Debug)]
-pub struct NodeGene {
+struct NodeGene {
     id: u32,
     layer: NodeType,
 }
 
 #[derive(Clone, Debug)]
-pub struct ConnectionGene {
+struct ConnectionGene {
     in_node: u32,
     out_node: u32,
     weight: f32,
@@ -27,20 +27,32 @@ pub struct ConnectionGene {
 }
 
 #[derive(Clone, Debug)]
-pub struct Genome {
+struct Genome {
     nodes: Vec<NodeGene>,
     connections: Vec<ConnectionGene>,
 }
 
 #[derive(Clone, Debug)]
-pub struct Individual {
+struct Individual {
     genome: Genome,
     fitness: f32,
 }
 
-pub struct History {
+struct History {
     innovation: u32,
     nodes_nb: u32,
+}
+
+struct Config {
+    population_size: u32,
+    n_inputs: u32,
+    n_outputs: u32,
+}
+
+struct Neat {
+    population: Vec<Individual>,
+    history: History,
+    config: Config,
 }
 
 impl NodeGene {
@@ -248,6 +260,55 @@ impl Individual {
 
         NeuralNetwork::new(input_ids, output_ids, neurons)
     }
+
+    fn get_initial_individual(n_inputs: u32, n_outputs: u32) -> Individual {
+        let mut genome = Genome::new();
+
+        // Add input and output nodes
+        for i in 1..=n_inputs {
+            let node = NodeGene::new(i, NodeType::Input);
+            genome.add_node(node);
+        }
+        for i in 1..=n_outputs {
+            let node = NodeGene::new(i + n_inputs, NodeType::Output);
+            genome.add_node(node);
+        }
+
+
+        // Fully connect input nodes to output nodes
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        for i in 1..=n_inputs {
+            for j in 1..=n_outputs {
+                let weight = normal.sample(&mut thread_rng());
+                let connection = ConnectionGene::new(i, j + n_inputs, weight, true, (i - 1) * n_outputs + j);
+                genome.add_connection(connection);
+            }
+        }
+
+        Individual::new(genome)
+    }
+}
+
+impl History {
+    fn new(n_neurons: u32, n_connections: u32) -> History {
+        History {
+            innovation: n_connections,
+            nodes_nb: n_neurons,
+        }
+    }
+}
+
+impl Neat {
+    fn new(config: Config) -> Neat {
+        let history = History::new(config.n_inputs + config.n_outputs, config.n_inputs * config.n_outputs);
+        let population = (0..config.population_size).map(|_| Individual::get_initial_individual(config.n_inputs, config.n_outputs)).collect::<Vec<_>>();
+
+        Neat {
+            population,
+            history,
+            config,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -439,5 +500,29 @@ mod tests {
         let outputs = network.feed_forward(inputs);
 
         assert_eq!(outputs, vec![0.5]);
+    }
+
+    #[test]
+    fn test_population_initialization() {
+        let config = Config {
+            population_size: 10,
+            n_inputs: 3,
+            n_outputs: 2,
+        };
+
+        let neat = Neat::new(config);
+
+        assert_eq!(neat.population.len(), 10);
+        assert_eq!(neat.history.innovation, 6);
+        assert_eq!(neat.history.nodes_nb, 5);
+
+        let individual = &neat.population[0];
+        assert_eq!(individual.genome.nodes.len(), 5);
+        assert_eq!(individual.genome.connections.len(), 6);
+
+        let node_ids = individual.genome.nodes.iter().map(|n| n.id).collect::<Vec<_>>();
+        let innovation_ids = individual.genome.connections.iter().map(|c| c.innovation).collect::<Vec<_>>();
+        assert_eq!(node_ids, vec![1, 2, 3, 4, 5]);
+        assert_eq!(innovation_ids, vec![1, 2, 3, 4, 5, 6]);
     }
 }
