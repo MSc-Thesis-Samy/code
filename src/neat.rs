@@ -15,6 +15,7 @@ enum NodeType {
 struct NodeGene {
     id: u32,
     layer: NodeType,
+    activation: ActivationFunction,
 }
 
 #[derive(Clone, Debug)]
@@ -56,8 +57,8 @@ struct Neat {
 }
 
 impl NodeGene {
-    fn new(id: u32, layer: NodeType) -> NodeGene {
-        NodeGene { id, layer }
+    fn new(id: u32, layer: NodeType, activation: ActivationFunction) -> NodeGene {
+        NodeGene { id, layer, activation }
     }
 }
 
@@ -119,7 +120,7 @@ impl Individual {
     }
 
     fn mutate_add_node(&mut self, history: &mut History) {
-        let new_node = NodeGene::new(history.nodes_nb + 1, NodeType::Hidden);
+        let new_node = NodeGene::new(history.nodes_nb + 1, NodeType::Hidden, SIGMOID ); // TODO get from config
         history.nodes_nb += 1;
         self.genome.add_node(new_node.clone());
 
@@ -233,28 +234,30 @@ impl Individual {
     }
 
     fn to_neural_network(&self) -> NeuralNetwork {
-        let input_ids = self.genome.nodes.iter().filter(|n| n.layer == NodeType::Input).map(|n| n.id).collect::<Vec<_>>();
-        let output_ids = self.genome.nodes.iter().filter(|n| n.layer == NodeType::Output).map(|n| n.id).collect::<Vec<_>>();
+        let (input_ids, input_activations): (Vec<u32>, Vec<ActivationFunction>) = self.genome.nodes.iter().filter(|n| n.layer == NodeType::Input).map(|n| (n.id, n.activation)).unzip();
+        let (output_ids, output_activations): (Vec<u32>, Vec<ActivationFunction>) = self.genome.nodes.iter().filter(|n| n.layer == NodeType::Output).map(|n| (n.id, n.activation)).unzip();
+        let mut input_activations = input_activations.iter();
+        let mut output_activations = output_activations.iter();
 
         let mut neurons = Vec::new();
 
         // Add input neurons
         for input_id in input_ids.iter() {
-            let neuron = Neuron::new(*input_id, Vec::new());
+            let neuron = Neuron::new(*input_id, Vec::new(), *input_activations.next().unwrap());
             neurons.push(neuron);
         }
 
         // Add hidden neurons
         for node in self.genome.nodes.iter().filter(|n| n.layer == NodeType::Hidden) {
             let inputs = self.genome.connections.iter().filter(|c| c.out_node == node.id && c.enabled).map(|c| NeuronInput::new(c.in_node, c.weight)).collect::<Vec<_>>();
-            let neuron = Neuron::new(node.id, inputs);
+            let neuron = Neuron::new(node.id, inputs, node.activation);
             neurons.push(neuron);
         }
 
         // Add output neurons
         for output_id in output_ids.iter() {
             let inputs = self.genome.connections.iter().filter(|c| c.out_node == *output_id && c.enabled).map(|c| NeuronInput::new(c.in_node, c.weight)).collect::<Vec<_>>();
-            let neuron = Neuron::new(*output_id, inputs);
+            let neuron = Neuron::new(*output_id, inputs, *output_activations.next().unwrap());
             neurons.push(neuron);
         }
 
@@ -266,14 +269,13 @@ impl Individual {
 
         // Add input and output nodes
         for i in 1..=n_inputs {
-            let node = NodeGene::new(i, NodeType::Input);
+            let node = NodeGene::new(i, NodeType::Input, IDENTITY);
             genome.add_node(node);
         }
         for i in 1..=n_outputs {
-            let node = NodeGene::new(i + n_inputs, NodeType::Output);
+            let node = NodeGene::new(i + n_inputs, NodeType::Output, SIGMOID); // TODO get from config
             genome.add_node(node);
         }
-
 
         // Fully connect input nodes to output nodes
         let normal = Normal::new(0.0, 1.0).unwrap();
@@ -317,12 +319,12 @@ mod tests {
 
     #[test]
     fn test_crossover() {
-        let node1 = NodeGene::new(1, NodeType::Input);
-        let node2 = NodeGene::new(2, NodeType::Input);
-        let node3 = NodeGene::new(3, NodeType::Input);
-        let node4 = NodeGene::new(4, NodeType::Output);
-        let node5 = NodeGene::new(5, NodeType::Hidden);
-        let node6 = NodeGene::new(6, NodeType::Hidden);
+        let node1 = NodeGene::new(1, NodeType::Input, SIGMOID);
+        let node2 = NodeGene::new(2, NodeType::Input, SIGMOID);
+        let node3 = NodeGene::new(3, NodeType::Input, SIGMOID);
+        let node4 = NodeGene::new(4, NodeType::Output, SIGMOID);
+        let node5 = NodeGene::new(5, NodeType::Hidden, SIGMOID);
+        let node6 = NodeGene::new(6, NodeType::Hidden, SIGMOID);
 
         let conn_1_4 = ConnectionGene::new(1, 4, 1., true, 1);
         let conn_2_4 = ConnectionGene::new(2, 4, 1., false, 2);
@@ -384,8 +386,8 @@ mod tests {
 
     #[test]
     fn test_mutate_add_node() {
-        let node1 = NodeGene::new(1, NodeType::Input);
-        let node2 = NodeGene::new(2, NodeType::Output);
+        let node1 = NodeGene::new(1, NodeType::Input, SIGMOID);
+        let node2 = NodeGene::new(2, NodeType::Output, SIGMOID);
         let connection = ConnectionGene::new(1, 2, 0.5, true, 1);
         let mut genome = Genome::new();
         genome.add_node(node1);
@@ -414,8 +416,8 @@ mod tests {
 
     #[test]
     fn test_mutate_add_connection() {
-        let node1 = NodeGene::new(1, NodeType::Input);
-        let node2 = NodeGene::new(2, NodeType::Output);
+        let node1 = NodeGene::new(1, NodeType::Input, SIGMOID);
+        let node2 = NodeGene::new(2, NodeType::Output, SIGMOID);
         let mut genome = Genome::new();
         genome.add_node(node1);
         genome.add_node(node2);
@@ -435,8 +437,8 @@ mod tests {
 
     #[test]
     fn test_mutate_add_connection_already_connected_nodes() {
-        let node1 = NodeGene::new(1, NodeType::Input);
-        let node2 = NodeGene::new(2, NodeType::Output);
+        let node1 = NodeGene::new(1, NodeType::Input, SIGMOID);
+        let node2 = NodeGene::new(2, NodeType::Output, SIGMOID);
         let connection = ConnectionGene::new(1, 2, 0., true, 1);
         let mut genome = Genome::new();
         genome.add_node(node1);
@@ -454,9 +456,9 @@ mod tests {
 
     #[test]
     fn test_network_conversion() {
-        let node1 = NodeGene::new(1, NodeType::Input);
-        let node2 = NodeGene::new(2, NodeType::Input);
-        let node3 = NodeGene::new(3, NodeType::Output);
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(2, NodeType::Input, IDENTITY);
+        let node3 = NodeGene::new(3, NodeType::Output, IDENTITY);
 
         let conn_1_3 = ConnectionGene::new(1, 3, 0.5, true, 1);
         let conn_2_3 = ConnectionGene::new(2, 3, 0.5, true, 2);
@@ -479,9 +481,9 @@ mod tests {
 
     #[test]
     fn test_network_conversion_with_disabled_connection() {
-        let node1 = NodeGene::new(1, NodeType::Input);
-        let node2 = NodeGene::new(2, NodeType::Input);
-        let node3 = NodeGene::new(3, NodeType::Output);
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(2, NodeType::Input, IDENTITY);
+        let node3 = NodeGene::new(3, NodeType::Output, IDENTITY);
 
         let conn_1_3 = ConnectionGene::new(1, 3, 0.5, true, 1);
         let conn_2_3 = ConnectionGene::new(2, 3, 0.5, false, 2);
@@ -524,5 +526,24 @@ mod tests {
         let innovation_ids = individual.genome.connections.iter().map(|c| c.innovation).collect::<Vec<_>>();
         assert_eq!(node_ids, vec![1, 2, 3, 4, 5]);
         assert_eq!(innovation_ids, vec![1, 2, 3, 4, 5, 6]);
+    }
+
+    #[test]
+    fn test_activation() {
+        let input_node = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let output_node = NodeGene::new(2, NodeType::Output, SIGMOID);
+        let connection = ConnectionGene::new(1, 2, 1., true, 1);
+
+        let mut genome = Genome::new();
+        genome.add_node(input_node);
+        genome.add_node(output_node);
+        genome.add_connection(connection);
+
+        let individual = Individual::new(genome);
+        let network = individual.to_neural_network();
+
+        let inputs = vec![0.];
+        let outputs = network.feed_forward(inputs);
+        assert_eq!(outputs, vec![0.5]);
     }
 }

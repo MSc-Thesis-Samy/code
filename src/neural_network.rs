@@ -2,6 +2,11 @@
 //
 use std::collections::HashMap;
 
+pub type ActivationFunction = fn(f32) -> f32;
+
+pub const SIGMOID: ActivationFunction = |x| 1. / (1. + (-x).exp());
+pub const IDENTITY: ActivationFunction = |x| x;
+
 pub struct NeuronInput {
     input_id: u32,
     weight: f32,
@@ -10,6 +15,7 @@ pub struct NeuronInput {
 pub struct Neuron {
     id: u32,
     inputs: Vec<NeuronInput>,
+    activation: ActivationFunction,
 }
 
 pub struct NeuralNetwork {
@@ -28,10 +34,11 @@ impl NeuronInput {
 }
 
 impl Neuron {
-    pub fn new(id: u32, inputs: Vec<NeuronInput>) -> Neuron {
+    pub fn new(id: u32, inputs: Vec<NeuronInput>, activation: ActivationFunction) -> Neuron {
         Neuron {
             id,
             inputs,
+            activation,
         }
     }
 }
@@ -57,11 +64,16 @@ impl NeuralNetwork {
                 continue;
             }
 
+            if neuron.inputs.is_empty() {
+                values.insert(neuron.id, 0.);
+                continue;
+            }
+
             let mut sum = 0.;
             for input in neuron.inputs.iter() {
                 sum += values.get(&input.input_id).unwrap() * input.weight;
             }
-            values.insert(neuron.id, sum);
+            values.insert(neuron.id, (neuron.activation)(sum));
         }
 
         let mut outputs = Vec::<f32>::new();
@@ -74,7 +86,6 @@ impl NeuralNetwork {
 }
 
 #[cfg(test)]
-
 mod tests {
     use super::*;
 
@@ -83,9 +94,9 @@ mod tests {
         let input_ids = vec![1, 2];
         let output_ids = vec![3];
         let neurons = vec![
-            Neuron::new(1, vec![]),
-            Neuron::new(2, vec![]),
-            Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5)]),
+            Neuron::new(1, vec![], IDENTITY),
+            Neuron::new(2, vec![], IDENTITY),
+            Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5)], IDENTITY),
         ];
         let network = NeuralNetwork::new(input_ids, output_ids, neurons);
 
@@ -100,10 +111,10 @@ mod tests {
         let input_ids = vec![1, 2];
         let output_ids = vec![4];
         let neurons = vec![
-            Neuron::new(1, vec![]),
-            Neuron::new(2, vec![]),
-            Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5)]),
-            Neuron::new(4, vec![NeuronInput::new(3, 0.5)]),
+            Neuron::new(1, vec![] , IDENTITY),
+            Neuron::new(2, vec![], IDENTITY),
+            Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5)], IDENTITY),
+            Neuron::new(4, vec![NeuronInput::new(3, 0.5)], IDENTITY),
         ];
         let network = NeuralNetwork::new(input_ids, output_ids, neurons);
 
