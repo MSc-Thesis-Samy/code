@@ -4,6 +4,8 @@ use rand::prelude::*;
 use rand_distr::Normal;
 use crate::neural_network::*;
 
+type EvaluationFunction = fn(&Individual) -> f32;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum NodeType {
     Input,
@@ -34,23 +36,42 @@ struct Genome {
 }
 
 #[derive(Clone, Debug)]
-struct Individual {
+pub struct Individual {
     genome: Genome,
     fitness: f32,
 }
 
+#[derive(Debug)]
+enum Mutation {
+    NewConnection(ConnectionGene),
+    NewNode(NodeGene, ConnectionGene, ConnectionGene),
+    // TODO Add weight perturbation?
+}
+
+#[derive(Debug)]
 struct History {
     innovation: u32,
     nodes_nb: u32,
+    mutations: Vec<(Mutation, u32)>,
+    generation: u32,
 }
 
-struct Config {
-    population_size: u32,
-    n_inputs: u32,
-    n_outputs: u32,
+pub struct Config {
+    pub population_size: u32,
+    pub n_inputs: u32,
+    pub n_outputs: u32,
+    pub n_generations: u32,
+    pub evaluation_function: EvaluationFunction,
+    pub weights_mean: f32,
+    pub weights_stddev: f32,
+    pub perturbation_stddev: f32,
+    pub survival_threshold: f32,
+    pub connection_mutation_rate: f32,
+    pub node_mutation_rate: f32,
+    pub weight_mutation_rate: f32,
 }
 
-struct Neat {
+pub struct Neat {
     population: Vec<Individual>,
     history: History,
     config: Config,
@@ -98,46 +119,88 @@ impl Individual {
         }
     }
 
-    fn mutate_add_connection(&mut self, history: &mut History) {
+    fn mutate_add_connection(&mut self, history: &mut History, distribution: &Normal<f32>) {
         let in_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Output).collect::<Vec<_>>();
         let out_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Input).collect::<Vec<_>>();
 
         // TODO only choose unconnected nodes?
         let in_node = in_nodes.choose(&mut thread_rng()).unwrap();
         let out_node = out_nodes.choose(&mut thread_rng()).unwrap();
+        let weight = distribution.sample(&mut thread_rng());
 
         if (in_node.layer == out_node.layer) || self.genome.are_connected(in_node.id, out_node.id) {
             return;
         }
 
-        let normal = Normal::new(0.0, 1.0).unwrap();
-        let weight = normal.sample(&mut thread_rng());
+        for (mutation, generation) in history.mutations.iter().rev() {
+            if *generation < history.generation {
+                break;
+            }
 
-        let connection = ConnectionGene::new(in_node.id, out_node.id, weight, true, history.innovation + 1);
+            match mutation {
+                Mutation::NewConnection(other_connection) => {
+                    if other_connection.in_node == in_node.id && other_connection.out_node == out_node.id {
+                        let connection = ConnectionGene::new(in_node.id, out_node.id, weight, true, other_connection.innovation);
+
+                        self.genome.add_connection(connection.clone());
+                        history.mutations.push((Mutation::NewConnection(connection), history.generation));
+                        return;
+                    }
+                }
+                _ => continue
+            }
+        }
+
         history.innovation += 1;
+        let connection = ConnectionGene::new(in_node.id, out_node.id, weight, true, history.innovation);
 
-        self.genome.add_connection(connection);
+        self.genome.add_connection(connection.clone());
+        history.mutations.push((Mutation::NewConnection(connection), history.generation));
     }
 
     fn mutate_add_node(&mut self, history: &mut History) {
-        let new_node = NodeGene::new(history.nodes_nb + 1, NodeType::Hidden, SIGMOID ); // TODO get from config
-        history.nodes_nb += 1;
-        self.genome.add_node(new_node.clone());
-
         // TODO always pick an enabled connection?
-        let connection = self.genome.connections.choose_mut(&mut thread_rng()).unwrap();
+        let connection = match self.genome.connections.choose_mut(&mut thread_rng()) {
+            Some(connection) => connection,
+            None => return
+        };
+
         connection.enabled = false;
 
-        let in_to_new_node_connection = ConnectionGene::new(connection.in_node, new_node.id, 1., true, history.innovation + 1);
-        history.innovation += 1;
-        let new_to_out_node_connection = ConnectionGene::new(new_node.id, connection.out_node, connection.weight, true, connection.innovation);
-        self.genome.connections.push(in_to_new_node_connection); self.genome.connections.push(new_to_out_node_connection);
+        for (mutation, generation) in history.mutations.iter().rev() {
+            if *generation < history.generation {
+                break;
+            }
+
+            match mutation {
+                Mutation::NewNode(new_node, in_new_connection , new_out_connection) => {
+                    if in_new_connection.in_node == connection.in_node && new_out_connection.out_node == connection.out_node {
+                        self.genome.add_node(new_node.clone());
+                        self.genome.connections.push(in_new_connection.clone());
+                        self.genome.connections.push(new_out_connection.clone());
+                        history.mutations.push((Mutation::NewNode(new_node.clone(), in_new_connection.clone(), new_out_connection.clone()), history.generation));
+                        return;
+                    }
+                }
+                _ => continue
+            }
+        }
+
+        let new_node = NodeGene::new(history.nodes_nb + 1, NodeType::Hidden, SIGMOID ); // TODO get from config
+        let in_new_connection = ConnectionGene::new(connection.in_node, new_node.id, 1., true, history.innovation + 1);
+        let new_out_connection = ConnectionGene::new(new_node.id, connection.out_node, connection.weight, true, history.innovation + 2);
+        history.nodes_nb += 1;
+        history.innovation += 2;
+        self.genome.add_node(new_node.clone());
+        self.genome.connections.push(in_new_connection.clone());
+        self.genome.connections.push(new_out_connection.clone());
+        history.mutations.push((Mutation::NewNode(new_node.clone(), in_new_connection.clone(), new_out_connection.clone()), history.generation));
     }
 
-    fn mutate_weights(&mut self) {
-        let normal = Normal::new(0.0, 1.0).unwrap();
+    fn mutate_weights(&mut self, weights_distribution: &Normal<f32>, perturbation_distribution: &Normal<f32>) {
+        // TODO set to random value
         for connection in self.genome.connections.iter_mut() {
-            connection.weight += normal.sample(&mut thread_rng());
+            connection.weight += perturbation_distribution.sample(&mut thread_rng());
         }
     }
 
@@ -222,15 +285,7 @@ impl Individual {
         let nodes = merge_nodes(&parent1.genome.nodes, &parent2.genome.nodes);
         let connections = merge_connections(&parent1.genome.connections, &parent2.genome.connections);
 
-        println!("{:?}", connections);
-
-        Individual {
-            genome: Genome {
-                nodes,
-                connections,
-            },
-            fitness: 0.0, // TODO: calculate fitness
-        }
+        Individual::new(Genome { nodes, connections })
     }
 
     fn to_neural_network(&self) -> NeuralNetwork {
@@ -264,51 +319,107 @@ impl Individual {
         NeuralNetwork::new(input_ids, output_ids, neurons)
     }
 
-    fn get_initial_individual(n_inputs: u32, n_outputs: u32) -> Individual {
+    pub fn evaluate(&self, input: &Vec<f32>) -> Vec<f32> {
+        let network = self.to_neural_network();
+        network.feed_forward(input)
+    }
+
+    fn get_initial_individual(n_inputs: u32, n_outputs: u32, distributions: &Normal<f32>) -> Individual {
         let mut genome = Genome::new();
 
-        // Add input and output nodes
         for i in 1..=n_inputs {
             let node = NodeGene::new(i, NodeType::Input, IDENTITY);
             genome.add_node(node);
         }
         for i in 1..=n_outputs {
-            let node = NodeGene::new(i + n_inputs, NodeType::Output, SIGMOID); // TODO get from config
+            let node = NodeGene::new(i + n_inputs, NodeType::Output, SIGMOID); // TODO get from config?
             genome.add_node(node);
         }
 
-        // Fully connect input nodes to output nodes
-        let normal = Normal::new(0.0, 1.0).unwrap();
-        for i in 1..=n_inputs {
-            for j in 1..=n_outputs {
-                let weight = normal.sample(&mut thread_rng());
-                let connection = ConnectionGene::new(i, j + n_inputs, weight, true, (i - 1) * n_outputs + j);
-                genome.add_connection(connection);
-            }
-        }
+        // for i in 1..=n_inputs {
+        //     for j in 1..=n_outputs {
+        //         let weight = distributions.sample(&mut thread_rng());
+        //         let connection = ConnectionGene::new(i, j + n_inputs, weight, true, (i - 1) * n_outputs + j);
+        //         genome.add_connection(connection);
+        //     }
+        // }
 
         Individual::new(genome)
     }
 }
 
 impl History {
-    fn new(n_neurons: u32, n_connections: u32) -> History {
+    fn new(n_neurons: u32, n_connections: u32, mutations: Vec<(Mutation, u32)>) -> History {
         History {
             innovation: n_connections,
             nodes_nb: n_neurons,
+            mutations,
+            generation: 0,
         }
     }
 }
 
 impl Neat {
-    fn new(config: Config) -> Neat {
-        let history = History::new(config.n_inputs + config.n_outputs, config.n_inputs * config.n_outputs);
-        let population = (0..config.population_size).map(|_| Individual::get_initial_individual(config.n_inputs, config.n_outputs)).collect::<Vec<_>>();
+    pub fn new(config: Config) -> Neat {
+        let history = History::new(config.n_inputs + config.n_outputs, 0, vec![]);
+        let weights_distribution = Normal::new(config.weights_mean, config.weights_stddev).unwrap();
+        let population = (0..config.population_size).map(|_| Individual::get_initial_individual(config.n_inputs, config.n_outputs, &weights_distribution)).collect::<Vec<_>>();
 
         Neat {
             population,
             history,
             config,
+        }
+    }
+
+    fn next_generation(&mut self) {
+        for individual in self.population.iter_mut() {
+            individual.fitness = (self.config.evaluation_function)(individual);
+        }
+
+        self.history.generation += 1;
+
+        let mut new_population = Vec::new();
+
+        let mut sorted_population = self.population.clone();
+        sorted_population.sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
+
+        let survival_cutoff = (self.config.population_size as f32 * self.config.survival_threshold) as usize;
+        let survivors = &sorted_population[..survival_cutoff];
+        new_population.extend_from_slice(survivors);
+
+        let mut rng = thread_rng();
+        let weights_distribution = Normal::new(self.config.weights_mean, self.config.weights_stddev).unwrap();
+        let perturbation_distribution = Normal::new(0., self.config.perturbation_stddev).unwrap();
+
+        while new_population.len() < self.config.population_size as usize {
+            let parent1 = survivors.choose(&mut rng).unwrap();
+            let parent2 = survivors.choose(&mut rng).unwrap();
+
+            let mut child = Individual::crossover(parent1, parent2);
+
+            if rng.gen::<f32>() < self.config.connection_mutation_rate {
+                child.mutate_add_connection(&mut self.history, &weights_distribution);
+            }
+
+            if rng.gen::<f32>() < self.config.node_mutation_rate {
+                child.mutate_add_node(&mut self.history);
+            }
+
+            if rng.gen::<f32>() < self.config.weight_mutation_rate {
+                child.mutate_weights(&weights_distribution, &perturbation_distribution);
+            }
+
+            println!("{:?}", child);
+            new_population.push(child);
+        }
+
+        self.population = new_population;
+    }
+
+    pub fn run(&mut self) {
+        for i in 1..=self.config.n_generations {
+            self.next_generation();
         }
     }
 }
@@ -392,16 +503,16 @@ mod tests {
         let mut genome = Genome::new();
         genome.add_node(node1);
         genome.add_node(node2);
-        genome.add_connection(connection);
+        genome.add_connection(connection.clone());
         let mut individual = Individual::new(genome);
 
-        let mut history = History { innovation: 1, nodes_nb: 2 };
+        let mut history = History { innovation: 1, nodes_nb: 2, mutations: vec![(Mutation::NewConnection(connection), 0)], generation: 0};
         individual.mutate_add_node(&mut history);
 
         assert_eq!(individual.genome.nodes.len(), 3);
         assert_eq!(individual.genome.connections.len(), 3);
         assert_eq!(history.nodes_nb, 3);
-        assert_eq!(history.innovation, 2);
+        assert_eq!(history.innovation, 3);
 
         let new_node = individual.genome.nodes.iter().find(|n| n.id == 3).unwrap();
         assert_eq!(new_node.layer, NodeType::Hidden);
@@ -423,8 +534,9 @@ mod tests {
         genome.add_node(node2);
         let mut individual = Individual::new(genome);
 
-        let mut history = History { innovation: 0, nodes_nb: 2 };
-        individual.mutate_add_connection(&mut history);
+        let mut history = History { innovation: 0, nodes_nb: 2, mutations: vec![], generation: 0};
+        let weights_distribution = Normal::new(0., 1.).unwrap();
+        individual.mutate_add_connection(&mut history, &weights_distribution);
 
         assert_eq!(individual.genome.nodes.len(), 2);
         assert_eq!(individual.genome.connections.len(), 1);
@@ -443,11 +555,12 @@ mod tests {
         let mut genome = Genome::new();
         genome.add_node(node1);
         genome.add_node(node2);
-        genome.add_connection(connection);
+        genome.add_connection(connection.clone());
         let mut individual = Individual::new(genome);
 
-        let mut history = History { innovation: 1, nodes_nb: 2 };
-        individual.mutate_add_connection(&mut history);
+        let mut history = History { innovation: 1, nodes_nb: 2, mutations: vec![(Mutation::NewConnection(connection), 0)], generation: 0};
+        let weights_distribution = Normal::new(0., 1.).unwrap();
+        individual.mutate_add_connection(&mut history, &weights_distribution);
 
         assert_eq!(individual.genome.nodes.len(), 2);
         assert_eq!(individual.genome.connections.len(), 1);
@@ -474,7 +587,7 @@ mod tests {
         let network = individual.to_neural_network();
 
         let inputs = vec![1., 1.];
-        let outputs = network.feed_forward(inputs);
+        let outputs = network.feed_forward(&inputs);
 
         assert_eq!(outputs, vec![1.]);
     }
@@ -499,7 +612,7 @@ mod tests {
         let network = individual.to_neural_network();
 
         let inputs = vec![1., 1.];
-        let outputs = network.feed_forward(inputs);
+        let outputs = network.feed_forward(&inputs);
 
         assert_eq!(outputs, vec![0.5]);
     }
@@ -510,22 +623,31 @@ mod tests {
             population_size: 10,
             n_inputs: 3,
             n_outputs: 2,
+            n_generations: 10,
+            evaluation_function: |_: &Individual| 0.0,
+            weights_mean: 0.0,
+            weights_stddev: 1.0,
+            perturbation_stddev: 1.,
+            survival_threshold: 0.3,
+            connection_mutation_rate: 0.1,
+            node_mutation_rate: 0.1,
+            weight_mutation_rate: 0.1,
         };
 
         let neat = Neat::new(config);
 
         assert_eq!(neat.population.len(), 10);
-        assert_eq!(neat.history.innovation, 6);
+        assert_eq!(neat.history.innovation, 0);
         assert_eq!(neat.history.nodes_nb, 5);
 
         let individual = &neat.population[0];
         assert_eq!(individual.genome.nodes.len(), 5);
-        assert_eq!(individual.genome.connections.len(), 6);
+        // assert_eq!(individual.genome.connections.len(), 6);
 
         let node_ids = individual.genome.nodes.iter().map(|n| n.id).collect::<Vec<_>>();
-        let innovation_ids = individual.genome.connections.iter().map(|c| c.innovation).collect::<Vec<_>>();
         assert_eq!(node_ids, vec![1, 2, 3, 4, 5]);
-        assert_eq!(innovation_ids, vec![1, 2, 3, 4, 5, 6]);
+        // let innovation_ids = individual.genome.connections.iter().map(|c| c.innovation).collect::<Vec<_>>();
+        // assert_eq!(innovation_ids, vec![1, 2, 3, 4, 5, 6]);
     }
 
     #[test]
@@ -543,7 +665,53 @@ mod tests {
         let network = individual.to_neural_network();
 
         let inputs = vec![0.];
-        let outputs = network.feed_forward(inputs);
+        let outputs = network.feed_forward(&inputs);
         assert_eq!(outputs, vec![0.5]);
+    }
+
+    #[test]
+    fn test_duplicate_add_connection_mutation() {
+        let input_node = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let output_node = NodeGene::new(2, NodeType::Output, SIGMOID);
+
+        let mut genome = Genome::new();
+        genome.add_node(input_node);
+        genome.add_node(output_node);
+
+        let mut individual_1 = Individual::new(genome.clone());
+        let mut individual_2 = Individual::new(genome);
+
+        let mut history = History::new(2, 0, vec![]);
+        let weights_distribution = Normal::new(0., 1.).unwrap();
+
+        individual_1.mutate_add_connection(&mut history, &weights_distribution);
+        individual_2.mutate_add_connection(&mut history, &weights_distribution);
+
+        assert_eq!(history.innovation, 1);
+    }
+
+    #[test]
+    fn test_duplicate_add_node_mutation() {
+        let input_node = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let output_node = NodeGene::new(2, NodeType::Output, SIGMOID);
+        let connection = ConnectionGene::new(1, 2, 1., true, 1);
+
+        let mut genome = Genome::new();
+        genome.add_node(input_node);
+        genome.add_node(output_node);
+        genome.add_connection(connection.clone());
+
+        let mut individual_1 = Individual::new(genome.clone());
+        let mut individual_2 = Individual::new(genome);
+
+        let mut history = History::new(2, 1, vec![(Mutation::NewConnection(connection), 0)]);
+        history.generation = 1;
+
+        individual_1.mutate_add_node(&mut history);
+        println!("{:?}", history);
+        individual_2.mutate_add_node(&mut history);
+        println!("{:?}", history);
+
+        assert_eq!(history.innovation, 3);
     }
 }

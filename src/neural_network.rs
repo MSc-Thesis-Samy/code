@@ -7,17 +7,20 @@ pub type ActivationFunction = fn(f32) -> f32;
 pub const SIGMOID: ActivationFunction = |x| 1. / (1. + (-x).exp());
 pub const IDENTITY: ActivationFunction = |x| x;
 
+#[derive(Debug)]
 pub struct NeuronInput {
     input_id: u32,
     weight: f32,
 }
 
+#[derive(Debug)]
 pub struct Neuron {
     id: u32,
     inputs: Vec<NeuronInput>,
     activation: ActivationFunction,
 }
 
+#[derive(Debug)]
 pub struct NeuralNetwork {
     input_ids: Vec<u32>,
     output_ids: Vec<u32>,
@@ -52,7 +55,7 @@ impl NeuralNetwork {
         }
     }
 
-    pub fn feed_forward(&self, inputs: Vec<f32>) -> Vec<f32> {
+    pub fn feed_forward(&self, inputs: &Vec<f32>) -> Vec<f32> {
         let mut values = HashMap::<u32, f32>::new();
 
         for input_id in self.input_ids.iter() {
@@ -101,7 +104,7 @@ mod tests {
         let network = NeuralNetwork::new(input_ids, output_ids, neurons);
 
         let inputs = vec![1., 1.];
-        let outputs = network.feed_forward(inputs);
+        let outputs = network.feed_forward(&inputs);
 
         assert_eq!(outputs, vec![1.]);
     }
@@ -119,7 +122,7 @@ mod tests {
         let network = NeuralNetwork::new(input_ids, output_ids, neurons);
 
         let inputs = vec![1., 1.];
-        let outputs = network.feed_forward(inputs);
+        let outputs = network.feed_forward(&inputs);
 
         assert_eq!(outputs, vec![0.5]);
     }
