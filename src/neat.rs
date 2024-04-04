@@ -5,6 +5,7 @@ use rand_distr::Normal;
 use crate::neural_network::*;
 
 type EvaluationFunction = fn(&Individual) -> f32;
+type Population = Vec<Individual>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum NodeType {
@@ -72,7 +73,7 @@ pub struct Config {
 }
 
 pub struct Neat {
-    population: Vec<Individual>,
+    population: Population,
     history: History,
     config: Config,
 }
@@ -323,29 +324,6 @@ impl Individual {
         let network = self.to_neural_network();
         network.feed_forward(input)
     }
-
-    fn get_initial_individual(n_inputs: u32, n_outputs: u32, distributions: &Normal<f32>) -> Individual {
-        let mut genome = Genome::new();
-
-        for i in 1..=n_inputs {
-            let node = NodeGene::new(i, NodeType::Input, IDENTITY);
-            genome.add_node(node);
-        }
-        for i in 1..=n_outputs {
-            let node = NodeGene::new(i + n_inputs, NodeType::Output, SIGMOID); // TODO get from config?
-            genome.add_node(node);
-        }
-
-        // for i in 1..=n_inputs {
-        //     for j in 1..=n_outputs {
-        //         let weight = distributions.sample(&mut thread_rng());
-        //         let connection = ConnectionGene::new(i, j + n_inputs, weight, true, (i - 1) * n_outputs + j);
-        //         genome.add_connection(connection);
-        //     }
-        // }
-
-        Individual::new(genome)
-    }
 }
 
 impl History {
@@ -361,15 +339,55 @@ impl History {
 
 impl Neat {
     pub fn new(config: Config) -> Neat {
-        let history = History::new(config.n_inputs + config.n_outputs, 0, vec![]);
         let weights_distribution = Normal::new(config.weights_mean, config.weights_stddev).unwrap();
-        let population = (0..config.population_size).map(|_| Individual::get_initial_individual(config.n_inputs, config.n_outputs, &weights_distribution)).collect::<Vec<_>>();
+        let (history, population) = Self::get_initial_state(config.n_inputs, config.n_outputs, config.population_size as usize, &weights_distribution);
 
         Neat {
             population,
             history,
             config,
         }
+    }
+
+    fn get_initial_state(n_inputs: u32, n_outputs: u32, population_size: usize, weights_distribution: &Normal<f32>) -> (History, Population) {
+        let get_initial_individual = |n_inputs, n_outputs, distributions: &Normal<f32>| {
+            let mut genome = Genome::new();
+
+            for i in 1..=n_inputs {
+                let node = NodeGene::new(i, NodeType::Input, IDENTITY);
+                genome.add_node(node);
+            }
+            for i in 1..=n_outputs {
+                let node = NodeGene::new(i + n_inputs, NodeType::Output, SIGMOID); // TODO get from config?
+                genome.add_node(node);
+            }
+
+            for i in 1..=n_inputs {
+                for j in 1..=n_outputs {
+                    let weight = distributions.sample(&mut thread_rng());
+                    let connection = ConnectionGene::new(i, j + n_inputs, weight, true, (i - 1) * n_outputs + j);
+                    genome.add_connection(connection);
+                }
+            }
+
+            Individual::new(genome)
+        };
+
+        let innovation = n_inputs * n_outputs;
+        let nodes_nb = n_inputs + n_outputs;
+
+        let mut mutations = Vec::new();
+        for i in 1..=n_inputs {
+            for j in 1..=n_outputs {
+                let connection = ConnectionGene::new(i, j + n_inputs, 0., true, (i - 1) * n_outputs + j); // weight does not matter here
+                mutations.push((Mutation::NewConnection(connection), 0));
+            }
+        }
+
+        let history = History { innovation, nodes_nb, mutations, generation: 0, };
+        let population = (0..population_size).map(|_| get_initial_individual(n_inputs, n_outputs, &weights_distribution)).collect::<Vec<_>>();
+
+        (history, population)
     }
 
     fn next_generation(&mut self) {
@@ -410,7 +428,6 @@ impl Neat {
                 child.mutate_weights(&weights_distribution, &perturbation_distribution);
             }
 
-            println!("{:?}", child);
             new_population.push(child);
         }
 
@@ -637,17 +654,17 @@ mod tests {
         let neat = Neat::new(config);
 
         assert_eq!(neat.population.len(), 10);
-        assert_eq!(neat.history.innovation, 0);
+        assert_eq!(neat.history.innovation, 6);
         assert_eq!(neat.history.nodes_nb, 5);
 
         let individual = &neat.population[0];
         assert_eq!(individual.genome.nodes.len(), 5);
-        // assert_eq!(individual.genome.connections.len(), 6);
+        assert_eq!(individual.genome.connections.len(), 6);
 
         let node_ids = individual.genome.nodes.iter().map(|n| n.id).collect::<Vec<_>>();
         assert_eq!(node_ids, vec![1, 2, 3, 4, 5]);
-        // let innovation_ids = individual.genome.connections.iter().map(|c| c.innovation).collect::<Vec<_>>();
-        // assert_eq!(innovation_ids, vec![1, 2, 3, 4, 5, 6]);
+        let innovation_ids = individual.genome.connections.iter().map(|c| c.innovation).collect::<Vec<_>>();
+        assert_eq!(innovation_ids, vec![1, 2, 3, 4, 5, 6]);
     }
 
     #[test]
@@ -708,9 +725,7 @@ mod tests {
         history.generation = 1;
 
         individual_1.mutate_add_node(&mut history);
-        println!("{:?}", history);
         individual_2.mutate_add_node(&mut history);
-        println!("{:?}", history);
 
         assert_eq!(history.innovation, 3);
     }
