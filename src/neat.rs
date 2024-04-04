@@ -123,7 +123,7 @@ impl Individual {
 
     fn mutate_add_connection(&mut self, history: &mut History, distribution: &Normal<f32>) {
         let in_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Output).collect::<Vec<_>>();
-        let out_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Input).collect::<Vec<_>>();
+        let out_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Input && n.layer != NodeType::Bias).collect::<Vec<_>>();
 
         // TODO only choose unconnected nodes?
         let in_node = in_nodes.choose(&mut thread_rng()).unwrap();
