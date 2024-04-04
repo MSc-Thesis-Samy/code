@@ -24,6 +24,7 @@ pub struct Neuron {
 pub struct NeuralNetwork {
     input_ids: Vec<u32>,
     output_ids: Vec<u32>,
+    bias_id: Option<u32>,
     neurons: Vec<Neuron>, // Neurons are ordered by layer
 }
 
@@ -47,11 +48,12 @@ impl Neuron {
 }
 
 impl NeuralNetwork {
-    pub fn new(input_ids: Vec<u32>, output_ids: Vec<u32>, neurons: Vec<Neuron>) -> NeuralNetwork {
+    pub fn new(input_ids: Vec<u32>, output_ids: Vec<u32>, bias_id: Option<u32>, neurons: Vec<Neuron>) -> NeuralNetwork {
         NeuralNetwork {
             input_ids,
             output_ids,
             neurons,
+            bias_id,
         }
     }
 
@@ -60,6 +62,10 @@ impl NeuralNetwork {
 
         for input_id in self.input_ids.iter() {
             values.insert(*input_id, inputs[*input_id as usize - 1]);
+        }
+
+        if let Some(bias_id) = self.bias_id {
+            values.insert(bias_id, 1.);
         }
 
         for neuron in self.neurons.iter() {
@@ -101,7 +107,7 @@ mod tests {
             Neuron::new(2, vec![], IDENTITY),
             Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5)], IDENTITY),
         ];
-        let network = NeuralNetwork::new(input_ids, output_ids, neurons);
+        let network = NeuralNetwork::new(input_ids, output_ids, None, neurons);
 
         let inputs = vec![1., 1.];
         let outputs = network.feed_forward(&inputs);
@@ -119,11 +125,29 @@ mod tests {
             Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5)], IDENTITY),
             Neuron::new(4, vec![NeuronInput::new(3, 0.5)], IDENTITY),
         ];
-        let network = NeuralNetwork::new(input_ids, output_ids, neurons);
+        let network = NeuralNetwork::new(input_ids, output_ids, None, neurons);
 
         let inputs = vec![1., 1.];
         let outputs = network.feed_forward(&inputs);
 
         assert_eq!(outputs, vec![0.5]);
+    }
+
+    #[test]
+    fn test_feed_forward_two_layers_with_bias() {
+        let input_ids = vec![1, 2];
+        let output_ids = vec![3];
+        let neurons = vec![
+            Neuron::new(1, vec![], IDENTITY),
+            Neuron::new(2, vec![], IDENTITY),
+            Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5), NeuronInput::new(4, 1.)], IDENTITY),
+            Neuron::new(4, vec![], IDENTITY),
+        ];
+        let network = NeuralNetwork::new(input_ids, output_ids, Some(4), neurons);
+
+        let inputs = vec![1., 1.];
+        let outputs = network.feed_forward(&inputs);
+
+        assert_eq!(outputs, vec![2.]);
     }
 }

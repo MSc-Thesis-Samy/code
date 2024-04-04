@@ -12,6 +12,7 @@ enum NodeType {
     Input,
     Hidden,
     Output,
+    Bias,
 }
 
 #[derive(Clone, Debug)]
@@ -294,6 +295,7 @@ impl Individual {
         let (output_ids, output_activations): (Vec<u32>, Vec<ActivationFunction>) = self.genome.nodes.iter().filter(|n| n.layer == NodeType::Output).map(|n| (n.id, n.activation)).unzip();
         let mut input_activations = input_activations.iter();
         let mut output_activations = output_activations.iter();
+        let bias  = self.genome.nodes.iter().find_map(|n| if n.layer == NodeType::Bias { Some((n.id, n.activation)) } else { None });
 
         let mut neurons = Vec::new();
 
@@ -317,7 +319,14 @@ impl Individual {
             neurons.push(neuron);
         }
 
-        NeuralNetwork::new(input_ids, output_ids, neurons)
+        // Add bias neuron if it exists
+        if let Some((bias_id, bias_activation)) = bias {
+            let inputs = self.genome.connections.iter().filter(|c| c.out_node == bias_id && c.enabled).map(|c| NeuronInput::new(c.in_node, c.weight)).collect::<Vec<_>>();
+            let neuron = Neuron::new(bias_id, inputs, bias_activation);
+            neurons.push(neuron);
+        }
+
+        NeuralNetwork::new(input_ids, output_ids, bias.map(|(id, _)| id), neurons)
     }
 
     pub fn evaluate(&self, input: &Vec<f32>) -> Vec<f32> {
@@ -357,11 +366,16 @@ impl Neat {
                 let node = NodeGene::new(i, NodeType::Input, IDENTITY);
                 genome.add_node(node);
             }
+
             for i in 1..=n_outputs {
                 let node = NodeGene::new(i + n_inputs, NodeType::Output, SIGMOID); // TODO get from config?
                 genome.add_node(node);
             }
 
+            let bias = NodeGene::new(n_inputs + n_outputs + 1, NodeType::Bias, IDENTITY);
+            genome.add_node(bias);
+
+            // input -> output connections
             for i in 1..=n_inputs {
                 for j in 1..=n_outputs {
                     let weight = distributions.sample(&mut thread_rng());
@@ -370,11 +384,18 @@ impl Neat {
                 }
             }
 
+            // bias -> output connections
+            for i in 1..=n_outputs {
+                let weight = distributions.sample(&mut thread_rng());
+                let connection = ConnectionGene::new(n_inputs + n_outputs + 1, i + n_inputs, weight, true, n_inputs * n_outputs + i);
+                genome.add_connection(connection);
+            }
+
             Individual::new(genome)
         };
 
-        let innovation = n_inputs * n_outputs;
-        let nodes_nb = n_inputs + n_outputs;
+        let innovation = n_inputs * n_outputs + n_outputs;
+        let nodes_nb = n_inputs + n_outputs + 1;
 
         let mut mutations = Vec::new();
         for i in 1..=n_inputs {
@@ -382,6 +403,11 @@ impl Neat {
                 let connection = ConnectionGene::new(i, j + n_inputs, 0., true, (i - 1) * n_outputs + j); // weight does not matter here
                 mutations.push((Mutation::NewConnection(connection), 0));
             }
+        }
+
+        for i in 1..=n_outputs {
+            let connection = ConnectionGene::new(n_inputs + n_outputs + 1, i + n_inputs, 0., true, n_inputs * n_outputs + i); // weight does not matter here
+            mutations.push((Mutation::NewConnection(connection), 0));
         }
 
         let history = History { innovation, nodes_nb, mutations, generation: 0, };
@@ -654,17 +680,17 @@ mod tests {
         let neat = Neat::new(config);
 
         assert_eq!(neat.population.len(), 10);
-        assert_eq!(neat.history.innovation, 6);
-        assert_eq!(neat.history.nodes_nb, 5);
+        assert_eq!(neat.history.innovation, 8);
+        assert_eq!(neat.history.nodes_nb, 6);
 
         let individual = &neat.population[0];
-        assert_eq!(individual.genome.nodes.len(), 5);
-        assert_eq!(individual.genome.connections.len(), 6);
+        assert_eq!(individual.genome.nodes.len(), 6);
+        assert_eq!(individual.genome.connections.len(), 8);
 
         let node_ids = individual.genome.nodes.iter().map(|n| n.id).collect::<Vec<_>>();
-        assert_eq!(node_ids, vec![1, 2, 3, 4, 5]);
+        assert_eq!(node_ids, vec![1, 2, 3, 4, 5, 6]);
         let innovation_ids = individual.genome.connections.iter().map(|c| c.innovation).collect::<Vec<_>>();
-        assert_eq!(innovation_ids, vec![1, 2, 3, 4, 5, 6]);
+        assert_eq!(innovation_ids, vec![1, 2, 3, 4, 5, 6, 7, 8]);
     }
 
     #[test]
