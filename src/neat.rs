@@ -167,6 +167,13 @@ impl Individual {
             None => return
         };
 
+        let in_node_layer = &self.genome.nodes.iter().find(|n| n.id == connection.in_node).unwrap().layer;
+        let out_node_layer = &self.genome.nodes.iter().find(|n| n.id == connection.out_node).unwrap().layer;
+
+        if *in_node_layer == NodeType::Hidden || *out_node_layer == NodeType::Hidden {
+            return;
+        }
+
         connection.enabled = false;
 
         for (mutation, generation) in history.mutations.iter().rev() {
@@ -321,8 +328,7 @@ impl Individual {
 
         // Add bias neuron if it exists
         if let Some((bias_id, bias_activation)) = bias {
-            let inputs = self.genome.connections.iter().filter(|c| c.out_node == bias_id && c.enabled).map(|c| NeuronInput::new(c.in_node, c.weight)).collect::<Vec<_>>();
-            let neuron = Neuron::new(bias_id, inputs, bias_activation);
+            let neuron = Neuron::new(bias_id, Vec::new(), bias_activation);
             neurons.push(neuron);
         }
 
@@ -463,6 +469,11 @@ impl Neat {
     pub fn run(&mut self) {
         for i in 1..=self.config.n_generations {
             self.next_generation();
+        }
+
+        for individual in self.population.iter_mut() {
+            individual.fitness = (self.config.evaluation_function)(individual);
+            println!("Individual fitness: {}", individual.fitness);
         }
     }
 }
@@ -658,6 +669,35 @@ mod tests {
         let outputs = network.feed_forward(&inputs);
 
         assert_eq!(outputs, vec![0.5]);
+    }
+
+    #[test]
+    fn test_network_conversion_with_bias() {
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(2, NodeType::Input, IDENTITY);
+        let node3 = NodeGene::new(3, NodeType::Output, IDENTITY);
+        let node4 = NodeGene::new(4, NodeType::Bias, IDENTITY);
+
+        let conn_1_3 = ConnectionGene::new(1, 3, 0.5, true, 1);
+        let conn_2_3 = ConnectionGene::new(2, 3, 0.5, true, 2);
+        let conn_4_3 = ConnectionGene::new(4, 3, 1., true, 3);
+
+        let mut genome = Genome::new();
+        genome.add_node(node1);
+        genome.add_node(node2);
+        genome.add_node(node3);
+        genome.add_node(node4);
+        genome.add_connection(conn_1_3);
+        genome.add_connection(conn_2_3);
+        genome.add_connection(conn_4_3);
+
+        let individual = Individual::new(genome);
+        let network = individual.to_neural_network();
+
+        let inputs = vec![1., 1.];
+        let outputs = network.feed_forward(&inputs);
+
+        assert_eq!(outputs, vec![2.]);
     }
 
     #[test]

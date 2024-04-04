@@ -145,9 +145,9 @@ mod tests {
         ];
         let network = NeuralNetwork::new(input_ids, output_ids, Some(4), neurons);
 
-        let inputs = vec![1., 1.];
+        let inputs = vec![2., 2.];
         let outputs = network.feed_forward(&inputs);
 
-        assert_eq!(outputs, vec![2.]);
+        assert_eq!(outputs, vec![3.]);
     }
 }
