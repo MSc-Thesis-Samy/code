@@ -424,7 +424,10 @@ impl History {
 
 impl Species {
     fn new(representative: Individual) -> Species {
-        Species { representative, members: Vec::new(), }
+        Species {
+            representative: representative.clone(),
+            members: vec![representative]
+        }
     }
 
     fn add_member(&mut self, individual: Individual) {
@@ -524,7 +527,6 @@ impl Neat {
 
         // create a new species and set the individual as the representative
         let mut new_species = Species::new(individual.clone());
-        new_species.add_member(individual);
         self.species.push(new_species);
     }
 
@@ -619,6 +621,26 @@ impl Neat {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const config: Config = Config {
+        population_size: 10,
+        n_inputs: 3,
+        n_outputs: 2,
+        n_generations: 10,
+        evaluation_function: |_: &Individual| 0.0,
+        weights_mean: 0.0,
+        weights_stddev: 1.0,
+        perturbation_stddev: 1.,
+        survival_threshold: 0.3,
+        connection_mutation_rate: 0.1,
+        node_mutation_rate: 0.1,
+        weight_mutation_rate: 0.1,
+        similarity_threshold: 1.,
+        excess_weight: 1.,
+        disjoint_weight: 1.,
+        matching_weight: 1.,
+    };
+
 
     #[test]
     fn test_crossover() {
@@ -840,25 +862,6 @@ mod tests {
 
     #[test]
     fn test_population_initialization() {
-        let config = Config {
-            population_size: 10,
-            n_inputs: 3,
-            n_outputs: 2,
-            n_generations: 10,
-            evaluation_function: |_: &Individual| 0.0,
-            weights_mean: 0.0,
-            weights_stddev: 1.0,
-            perturbation_stddev: 1.,
-            survival_threshold: 0.3,
-            connection_mutation_rate: 0.1,
-            node_mutation_rate: 0.1,
-            weight_mutation_rate: 0.1,
-            similarity_threshold: 1.,
-            excess_weight: 1.,
-            disjoint_weight: 1.,
-            matching_weight: 1.,
-        };
-
         let mut neat = Neat::new(config);
         neat.initialize();
 
@@ -1045,5 +1048,62 @@ mod tests {
 
         let similarity = individual1.similarity(&individual2, 1., 1., 1.);
         assert_eq!(similarity, 1.);
+    }
+
+    #[test]
+    fn test_species_assignment_same_species() {
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(2, NodeType::Input, IDENTITY);
+        let node3 = NodeGene::new(3, NodeType::Output, IDENTITY);
+
+        let conn_1_3 = ConnectionGene::new(1, 3, 0., true, 1);
+        let conn_2_3 = ConnectionGene::new(2, 3, 0., true, 2);
+
+        let mut genome = Genome::new();
+        genome.add_node(node1);
+        genome.add_node(node2);
+        genome.add_node(node3);
+        genome.add_connection(conn_1_3);
+        genome.add_connection(conn_2_3);
+
+        let individual1 = Individual::new(genome);
+        let individual2 = individual1.clone();
+
+        let mut neat = Neat::new(config);
+        neat.species = vec![Species::new(individual1)];
+        neat.assign_to_species(individual2);
+
+        assert_eq!(neat.species.len(), 1);
+        assert_eq!(neat.species[0].members.len(), 2);
+    }
+
+    #[test]
+    fn test_species_assignment_different_species() {
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(1, NodeType::Output, IDENTITY);
+
+        let conn_1_2 = ConnectionGene::new(1, 2, 2., true, 1);
+        let conn_1_2_bis = ConnectionGene::new(1, 2, 0., true, 1);
+
+        let mut genome1 = Genome::new();
+        genome1.add_node(node1.clone());
+        genome1.add_node(node2.clone());
+        genome1.add_connection(conn_1_2.clone());
+
+        let mut genome2 = Genome::new();
+        genome2.add_node(node1);
+        genome2.add_node(node2);
+        genome2.add_connection(conn_1_2_bis);
+
+        let individual1 = Individual::new(genome1);
+        let individual2 = Individual::new(genome2);
+
+        let mut neat = Neat::new(config);
+        neat.species = vec![Species::new(individual1)];
+        neat.assign_to_species(individual2);
+
+        assert_eq!(neat.species.len(), 2);
+        assert_eq!(neat.species[0].members.len(), 1);
+        assert_eq!(neat.species[1].members.len(), 1);
     }
 }
