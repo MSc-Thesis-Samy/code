@@ -939,4 +939,111 @@ mod tests {
 
         assert_eq!(history.innovation, 3);
     }
+
+    #[test]
+    fn test_similarity_same_individuals() {
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(2, NodeType::Input, IDENTITY);
+
+        let conn_1_3 = ConnectionGene::new(1, 3, 0., true, 1);
+
+        let mut genome1 = Genome::new();
+        genome1.add_node(node1.clone());
+        genome1.add_node(node2.clone());
+        genome1.add_connection(conn_1_3.clone());
+
+        let individual1 = Individual::new(genome1);
+        let individual2 = individual1.clone();
+
+        let similarity = individual1.similarity(&individual2, 1., 1., 1.);
+        assert_eq!(similarity, 0.);
+    }
+
+    #[test]
+    fn test_similarity_excess() {
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(2, NodeType::Input, IDENTITY);
+        let node3 = NodeGene::new(3, NodeType::Hidden, IDENTITY);
+
+        let conn_1_3 = ConnectionGene::new(1, 3, 0., true, 1);
+        let con_1_3 = ConnectionGene::new(1, 3, 0., true, 2);
+        let conn_3_2 = ConnectionGene::new(3, 2, 0., true, 3);
+
+        let mut genome1 = Genome::new();
+        genome1.add_node(node1.clone());
+        genome1.add_node(node2.clone());
+        genome1.add_node(node3.clone());
+        genome1.add_connection(conn_1_3.clone());
+
+        let mut genome2 = genome1.clone();
+        genome2.add_node(node3);
+        genome2.add_connection(con_1_3);
+        genome2.add_connection(conn_3_2);
+
+        let individual1 = Individual::new(genome1);
+        let individual2 = Individual::new(genome2);
+
+        let similarity = individual1.similarity(&individual2, 1., 1., 1.);
+        assert_eq!(similarity, 2. / 3.);
+    }
+
+    #[test]
+    fn test_similarity_disjoint() {
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(2, NodeType::Input, IDENTITY);
+        let node3 = NodeGene::new(3, NodeType::Input, IDENTITY);
+        let node4 = NodeGene::new(4, NodeType::Output, IDENTITY);
+
+        let conn_1_4 = ConnectionGene::new(1, 4, 0., true, 1);
+        let conn_2_4 = ConnectionGene::new(2, 4, 0., true, 2);
+        let conn_3_4 = ConnectionGene::new(3, 4, 0., true, 3);
+
+        let mut genome1 = Genome::new();
+        genome1.add_node(node1.clone());
+        genome1.add_node(node2.clone());
+        genome1.add_node(node3.clone());
+        genome1.add_node(node4.clone());
+        genome1.add_connection(conn_1_4.clone());
+        genome1.add_connection(conn_3_4.clone());
+
+        let mut genome2 = Genome::new();
+        genome2.add_node(node1);
+        genome2.add_node(node2);
+        genome2.add_node(node3);
+        genome2.add_node(node4);
+        genome2.add_connection(conn_1_4);
+        genome2.add_connection(conn_2_4);
+        genome2.add_connection(conn_3_4);
+
+        let individual1 = Individual::new(genome1);
+        let individual2 = Individual::new(genome2);
+
+        let similarity = individual1.similarity(&individual2, 1., 1., 1.);
+        assert_eq!(similarity, 1. / 3.);
+    }
+
+    #[test]
+    fn test_similarity_matching() {
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(1, NodeType::Output, IDENTITY);
+
+        let conn_1_2 = ConnectionGene::new(1, 2, 1., true, 1);
+        let conn_1_2_bis = ConnectionGene::new(1, 2, 0., true, 1);
+
+        let mut genome1 = Genome::new();
+        genome1.add_node(node1.clone());
+        genome1.add_node(node2.clone());
+        genome1.add_connection(conn_1_2.clone());
+
+        let mut genome2 = Genome::new();
+        genome2.add_node(node1);
+        genome2.add_node(node2);
+        genome2.add_connection(conn_1_2_bis);
+
+        let individual1 = Individual::new(genome1);
+        let individual2 = Individual::new(genome2);
+
+        let similarity = individual1.similarity(&individual2, 1., 1., 1.);
+        assert_eq!(similarity, 1.);
+    }
 }
