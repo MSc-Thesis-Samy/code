@@ -18,15 +18,19 @@ fn main() {
         population_size: 150,
         n_inputs: 2,
         n_outputs: 1,
-        n_generations: 100,
+        n_generations: 3000,
         evaluation_function: xor,
         weights_mean: 0.,
-        weights_stddev: 4.,
-        perturbation_stddev: 1.,
+        weights_stddev: 6.,
+        perturbation_stddev: 3.,
         survival_threshold: 0.25,
         connection_mutation_rate: 0.3,
-        node_mutation_rate: 0.03,
+        node_mutation_rate: 0.1,
         weight_mutation_rate: 0.8,
+        similarity_threshold: 3.,
+        excess_weight: 1.,
+        disjoint_weight: 1.,
+        matching_weight: 0.4,
     };
 
     let mut neat = Neat::new(config);
