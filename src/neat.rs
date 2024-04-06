@@ -1106,4 +1106,35 @@ mod tests {
         assert_eq!(neat.species[0].members.len(), 1);
         assert_eq!(neat.species[1].members.len(), 1);
     }
+
+    #[test]
+    fn test_species_update() {
+        let node1 = NodeGene::new(1, NodeType::Input, IDENTITY);
+        let node2 = NodeGene::new(1, NodeType::Output, IDENTITY);
+
+        let conn_1_2 = ConnectionGene::new(1, 2, 2., true, 1);
+        let conn_1_2_bis = ConnectionGene::new(1, 2, 0., true, 1);
+
+        let mut genome1 = Genome::new();
+        genome1.add_node(node1.clone());
+        genome1.add_node(node2.clone());
+        genome1.add_connection(conn_1_2.clone());
+
+        let mut genome2 = Genome::new();
+        genome2.add_node(node1);
+        genome2.add_node(node2);
+        genome2.add_connection(conn_1_2_bis);
+
+        let individual1 = Individual::new(genome1);
+        let individual2 = Individual::new(genome2);
+        let individual3 = individual1.clone();
+
+        let mut neat = Neat::new(config);
+        neat.species = vec![Species::new(individual1)];
+        neat.update_species(vec![individual2, individual3]);
+
+        assert_eq!(neat.species.len(), 2);
+        assert_eq!(neat.species[0].members.len(), 1);
+        assert_eq!(neat.species[1].members.len(), 1);
+    }
 }
