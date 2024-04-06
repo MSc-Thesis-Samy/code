@@ -523,7 +523,8 @@ impl Neat {
         }
 
         // create a new species and set the individual as the representative
-        let new_species = Species::new(individual);
+        let mut new_species = Species::new(individual.clone());
+        new_species.add_member(individual);
         self.species.push(new_species);
     }
 
@@ -858,13 +859,15 @@ mod tests {
             matching_weight: 1.,
         };
 
-        let neat = Neat::new(config);
+        let mut neat = Neat::new(config);
+        neat.initialize();
 
-        assert_eq!(neat.population.len(), 10);
+        let population_size = neat.species.iter().map(|s| s.members.len()).sum::<usize>();
+        assert_eq!(population_size, 10);
         assert_eq!(neat.history.innovation, 8);
         assert_eq!(neat.history.nodes_nb, 6);
 
-        let individual = &neat.population[0];
+        let individual = &neat.species[0].members[0];
         assert_eq!(individual.genome.nodes.len(), 6);
         assert_eq!(individual.genome.connections.len(), 8);
 

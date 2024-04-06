@@ -1,5 +1,3 @@
-#![allow(dead_code)] // TODO remove
-//
 use std::collections::HashMap;
 
 pub type ActivationFunction = fn(f32) -> f32;
