@@ -18,7 +18,7 @@ fn main() {
         population_size: 150,
         n_inputs: 2,
         n_outputs: 1,
-        n_generations: 1000,
+        n_generations: 1500,
         evaluation_function: xor,
         weights_mean: 0.,
         weights_stddev: 0.8,
@@ -29,10 +29,12 @@ fn main() {
         connection_mutation_rate: 0.3,
         node_mutation_rate: 0.03,
         weight_mutation_rate: 0.8,
-        similarity_threshold: 4.6,
+        similarity_threshold: 4.5,
         excess_weight: 1.,
         disjoint_weight: 1.,
         matching_weight: 0.2,
+        champion_copy_threshold: 5,
+        stagnation_threshold: 150,
     };
 
     let mut neat = Neat::new(config);

@@ -75,11 +75,16 @@ pub struct Config {
     pub excess_weight: f32,
     pub disjoint_weight: f32,
     pub matching_weight: f32,
+    pub champion_copy_threshold: usize,
+    pub stagnation_threshold: u32,
 }
 
 struct Species {
     representative: Individual,
     members: Population,
+    appearance_generation: u32,
+    latest_improvement: u32,
+    max_fitness: f32,
 }
 
 pub struct Neat {
@@ -441,10 +446,13 @@ impl History {
 }
 
 impl Species {
-    fn new(representative: Individual) -> Species {
+    fn new(representative: Individual, appearance_generation: u32) -> Species {
         Species {
             representative: representative.clone(),
-            members: vec![representative]
+            members: vec![representative],
+            appearance_generation,
+            latest_improvement: 0,
+            max_fitness: 0.,
         }
     }
 
@@ -459,6 +467,10 @@ impl Species {
     fn get_random_member(&self) -> Option<&Individual> {
         let mut rng = thread_rng();
         self.members.choose(&mut rng)
+    }
+
+    fn len(&self) -> usize {
+        self.members.len()
     }
 }
 
@@ -544,7 +556,7 @@ impl Neat {
         }
 
         // create a new species and set the individual as the representative
-        let new_species = Species::new(individual.clone());
+        let new_species = Species::new(individual.clone(), self.history.generation);
         self.species.push(new_species);
     }
 
@@ -573,12 +585,15 @@ impl Neat {
         for species in self.species.iter_mut() {
             for individual in species.members.iter_mut() {
                 individual.fitness = (self.config.evaluation_function)(individual);
+                if individual.fitness > species.max_fitness {
+                    species.max_fitness = individual.fitness;
+                    species.latest_improvement = self.history.generation;
+                }
             }
         }
     }
 
     fn get_offsprings_split(&self) -> Vec<u32> {
-        let mut rng = thread_rng();
         let mut offsprings = Vec::new();
         let total_fitness = self.species.iter().map(|s| s.members.iter().map(|i| i.fitness).sum::<f32>()).sum::<f32>();
 
@@ -591,8 +606,13 @@ impl Neat {
         offsprings
     }
 
+    fn remove_stagnated_species(&mut self) {
+        self.species.retain(|species| self.history.generation - species.latest_improvement < self.config.stagnation_threshold);
+    }
+
     fn next_generation(&mut self) {
         self.update_fitnesses();
+        self.remove_stagnated_species();
 
         self.history.generation += 1;
 
@@ -608,9 +628,12 @@ impl Neat {
             let mut offsprings = Vec::new();
             let mut sorted_members = species.members.clone();
             sorted_members.sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
-            let survival_cutoff = (species.members.len() as f32 * self.config.survival_threshold) as usize;
+            let survival_cutoff = (species.len() as f32 * self.config.survival_threshold) as usize;
             let survivors = &sorted_members[..=survival_cutoff];
-            offsprings.push(survivors[0].clone());
+
+            if species.len() >= self.config.champion_copy_threshold {
+                offsprings.push(survivors[0].clone());
+            }
 
             while offsprings.len() <= offsprings_nb as usize {
                 let parent1 = survivors.choose(&mut rng).unwrap();
@@ -652,7 +675,7 @@ impl Neat {
         self.update_fitnesses();
 
         for species in self.species.iter() {
-            // println!("Species size: {}", species.members.len());
+            println!("Species size: {}", species.len());
             for individual in species.members.iter() {
                 println!("Individual fitness: {}", individual.fitness);
                 // println!("Number of nodes: {}", individual.genome.nodes.len());
@@ -685,6 +708,8 @@ mod tests {
         excess_weight: 1.,
         disjoint_weight: 1.,
         matching_weight: 1.,
+        champion_copy_threshold: 1,
+        stagnation_threshold: 15,
     };
 
 
@@ -911,7 +936,7 @@ mod tests {
         let mut neat = Neat::new(config);
         neat.initialize();
 
-        let population_size = neat.species.iter().map(|s| s.members.len()).sum::<usize>();
+        let population_size = neat.species.iter().map(|s| s.len()).sum::<usize>();
         assert_eq!(population_size, 10);
         assert_eq!(neat.history.innovation, 8);
         assert_eq!(neat.history.nodes_nb, 6);
@@ -1116,11 +1141,11 @@ mod tests {
         let individual2 = individual1.clone();
 
         let mut neat = Neat::new(config);
-        neat.species = vec![Species::new(individual1)];
+        neat.species = vec![Species::new(individual1, 0)];
         neat.assign_to_species(individual2);
 
         assert_eq!(neat.species.len(), 1);
-        assert_eq!(neat.species[0].members.len(), 2);
+        assert_eq!(neat.species[0].len(), 2);
     }
 
     #[test]
@@ -1145,12 +1170,12 @@ mod tests {
         let individual2 = Individual::new(genome2);
 
         let mut neat = Neat::new(config);
-        neat.species = vec![Species::new(individual1)];
+        neat.species = vec![Species::new(individual1, 0)];
         neat.assign_to_species(individual2);
 
         assert_eq!(neat.species.len(), 2);
-        assert_eq!(neat.species[0].members.len(), 1);
-        assert_eq!(neat.species[1].members.len(), 1);
+        assert_eq!(neat.species[0].len(), 1);
+        assert_eq!(neat.species[1].len(), 1);
     }
 
     #[test]
@@ -1176,20 +1201,20 @@ mod tests {
         let individual3 = individual1.clone();
 
         let mut neat = Neat::new(config);
-        neat.species = vec![Species::new(individual1)];
+        neat.species = vec![Species::new(individual1, 0)];
         neat.update_species(vec![individual2, individual3]);
 
         assert_eq!(neat.species.len(), 2);
-        assert_eq!(neat.species[0].members.len(), 1);
-        assert_eq!(neat.species[1].members.len(), 1);
+        assert_eq!(neat.species[0].len(), 1);
+        assert_eq!(neat.species[1].len(), 1);
     }
 
     #[test]
     fn test_offsprings_split_different_fitnesses() {
         let mut neat = Neat::new(config);
         neat.species = vec![
-            Species::new(Individual::new(Genome::new())),
-            Species::new(Individual::new(Genome::new())),
+            Species::new(Individual::new(Genome::new()), 0),
+            Species::new(Individual::new(Genome::new()), 0),
         ];
 
         neat.species[0].members[0].fitness = 1.;
@@ -1203,8 +1228,8 @@ mod tests {
     fn test_offsprings_split_same_fitnesses() {
         let mut neat = Neat::new(config);
         neat.species = vec![
-            Species::new(Individual::new(Genome::new())),
-            Species::new(Individual::new(Genome::new())),
+            Species::new(Individual::new(Genome::new()), 0),
+            Species::new(Individual::new(Genome::new()), 0),
         ];
 
         neat.species[0].members[0].fitness = 1.;
@@ -1212,5 +1237,39 @@ mod tests {
 
         let offsprings_split = neat.get_offsprings_split();
         assert_eq!(offsprings_split, vec![5, 5]);
+    }
+
+    #[test]
+    fn test_remove_stagnated_species_remove_species() {
+        let mut neat = Neat::new(config);
+        neat.species = vec![
+            Species::new(Individual::new(Genome::new()), 0),
+            Species::new(Individual::new(Genome::new()), 0),
+        ];
+
+        neat.species[0].latest_improvement = 10;
+        neat.species[1].latest_improvement = 0;
+
+        neat.history.generation = 20;
+
+        neat.remove_stagnated_species();
+        assert_eq!(neat.species.len(), 1);
+    }
+
+    #[test]
+    fn test_remove_stagnated_species_keep_species() {
+        let mut neat = Neat::new(config);
+        neat.species = vec![
+            Species::new(Individual::new(Genome::new()), 0),
+            Species::new(Individual::new(Genome::new()), 0),
+        ];
+
+        neat.species[0].latest_improvement = 10;
+        neat.species[1].latest_improvement = 10;
+
+        neat.history.generation = 20;
+
+        neat.remove_stagnated_species();
+        assert_eq!(neat.species.len(), 2);
     }
 }
