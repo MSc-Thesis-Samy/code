@@ -66,6 +66,7 @@ pub struct Config {
     pub weights_stddev: f32,
     pub perturbation_stddev: f32,
     pub new_weight_probability: f32,
+    pub enable_probability: f32,
     pub survival_threshold: f32,
     pub connection_mutation_rate: f32,
     pub node_mutation_rate: f32,
@@ -222,6 +223,15 @@ impl Individual {
             }
             else {
                 connection.weight += perturbation_distribution.sample(&mut thread_rng());
+            }
+        }
+    }
+
+    fn enable_connections(&mut self, enable_probability: f32) {
+        let mut rng = thread_rng();
+        for connection in self.genome.connections.iter_mut() {
+            if rng.gen::<f32>() < enable_probability {
+                connection.enabled = true;
             }
         }
     }
@@ -620,6 +630,8 @@ impl Neat {
                     child.mutate_weights(&weights_distribution, &perturbation_distribution, self.config.new_weight_probability);
                 }
 
+                child.enable_connections(self.config.enable_probability);
+
                 offsprings.push(child);
             }
 
@@ -664,6 +676,7 @@ mod tests {
         weights_stddev: 1.0,
         perturbation_stddev: 1.,
         new_weight_probability: 0.1,
+        enable_probability: 0.1,
         survival_threshold: 0.3,
         connection_mutation_rate: 0.1,
         node_mutation_rate: 0.1,

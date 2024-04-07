@@ -24,6 +24,7 @@ fn main() {
         weights_stddev: 0.8,
         perturbation_stddev: 0.2,
         new_weight_probability: 0.1,
+        enable_probability: 0.25,
         survival_threshold: 0.25,
         connection_mutation_rate: 0.3,
         node_mutation_rate: 0.03,
