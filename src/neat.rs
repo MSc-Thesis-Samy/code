@@ -65,6 +65,7 @@ pub struct Config {
     pub weights_mean: f32,
     pub weights_stddev: f32,
     pub perturbation_stddev: f32,
+    pub new_weight_probability: f32,
     pub survival_threshold: f32,
     pub connection_mutation_rate: f32,
     pub node_mutation_rate: f32,
@@ -213,10 +214,15 @@ impl Individual {
         history.mutations.push((Mutation::NewNode(new_node.clone(), in_new_connection.clone(), new_out_connection.clone()), history.generation));
     }
 
-    fn mutate_weights(&mut self, weights_distribution: &Normal<f32>, perturbation_distribution: &Normal<f32>) {
-        // TODO set to random value
+    fn mutate_weights(&mut self, weights_distribution: &Normal<f32>, perturbation_distribution: &Normal<f32>, new_weight_probability: f32) {
+        let mut rng = thread_rng();
         for connection in self.genome.connections.iter_mut() {
-            connection.weight += perturbation_distribution.sample(&mut thread_rng());
+            if rng.gen::<f32>() < new_weight_probability {
+                connection.weight = weights_distribution.sample(&mut thread_rng());
+            }
+            else {
+                connection.weight += perturbation_distribution.sample(&mut thread_rng());
+            }
         }
     }
 
@@ -611,7 +617,7 @@ impl Neat {
                 }
 
                 if rng.gen::<f32>() < self.config.weight_mutation_rate {
-                    child.mutate_weights(&weights_distribution, &perturbation_distribution);
+                    child.mutate_weights(&weights_distribution, &perturbation_distribution, self.config.new_weight_probability);
                 }
 
                 offsprings.push(child);
@@ -657,6 +663,7 @@ mod tests {
         weights_mean: 0.0,
         weights_stddev: 1.0,
         perturbation_stddev: 1.,
+        new_weight_probability: 0.1,
         survival_threshold: 0.3,
         connection_mutation_rate: 0.1,
         node_mutation_rate: 0.1,

@@ -23,14 +23,15 @@ fn main() {
         weights_mean: 0.,
         weights_stddev: 0.8,
         perturbation_stddev: 0.2,
+        new_weight_probability: 0.1,
         survival_threshold: 0.25,
         connection_mutation_rate: 0.3,
         node_mutation_rate: 0.03,
         weight_mutation_rate: 0.8,
-        similarity_threshold: 3.,
+        similarity_threshold: 4.6,
         excess_weight: 1.,
         disjoint_weight: 1.,
-        matching_weight: 0.4,
+        matching_weight: 0.2,
     };
 
     let mut neat = Neat::new(config);
