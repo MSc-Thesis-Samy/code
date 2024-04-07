@@ -407,7 +407,9 @@ impl Individual {
         let matching = matching_weight_difference(&self.genome.connections, &other_individual.genome.connections);
         let max_genes_number = self.genome.connections.len().max(other_individual.genome.connections.len());
 
-        excess_weight * excess as f32 / max_genes_number as f32 + disjoint_weight * disjoint as f32 / max_genes_number as f32 + matching_weight * matching
+        let weighted_sum = excess_weight * excess as f32 / max_genes_number as f32 + disjoint_weight * disjoint as f32 / max_genes_number as f32 + matching_weight * matching;
+        // println!("Weighted sum: {}", weighted_sum);
+        weighted_sum
     }
 }
 
@@ -526,7 +528,7 @@ impl Neat {
         }
 
         // create a new species and set the individual as the representative
-        let mut new_species = Species::new(individual.clone());
+        let new_species = Species::new(individual.clone());
         self.species.push(new_species);
     }
 
@@ -551,23 +553,42 @@ impl Neat {
         }
     }
 
-    fn next_generation(&mut self) {
-        // iterate over individuals in all species
+    fn update_fitnesses(&mut self) {
         for species in self.species.iter_mut() {
             for individual in species.members.iter_mut() {
                 individual.fitness = (self.config.evaluation_function)(individual);
             }
         }
+    }
+
+    fn get_offsprings_split(&self) -> Vec<u32> {
+        let mut rng = thread_rng();
+        let mut offsprings = Vec::new();
+        let total_fitness = self.species.iter().map(|s| s.members.iter().map(|i| i.fitness).sum::<f32>()).sum::<f32>();
+
+        for species in self.species.iter() {
+            let species_fitness = species.members.iter().map(|i| i.fitness).sum::<f32>();
+            let offsprings_nb = (species_fitness / total_fitness * self.config.population_size as f32).round() as u32;
+            offsprings.push(offsprings_nb);
+        }
+
+        offsprings
+    }
+
+    fn next_generation(&mut self) {
+        self.update_fitnesses();
 
         self.history.generation += 1;
 
         let mut new_population = Vec::new();
+        let offsprings_split = self.get_offsprings_split();
+
         let mut rng = thread_rng();
         let weights_distribution = Normal::new(self.config.weights_mean, self.config.weights_stddev).unwrap();
         let perturbation_distribution = Normal::new(0., self.config.perturbation_stddev).unwrap();
 
-        for species in self.species.iter() {
-            let offsprings_nb = self.config.population_size / self.species.len() as u32;
+        for (i, species) in self.species.iter().enumerate() {
+            let offsprings_nb = offsprings_split[i];
             let mut offsprings = Vec::new();
             let mut sorted_members = species.members.clone();
             sorted_members.sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
@@ -600,6 +621,7 @@ impl Neat {
         }
 
         self.update_species(new_population);
+        println!("Number of species: {}", self.species.len());
     }
 
     pub fn run(&mut self) {
@@ -609,12 +631,16 @@ impl Neat {
             self.next_generation();
         }
 
-        // for individual in self.population.iter_mut() {
-        //     individual.fitness = (self.config.evaluation_function)(individual);
-        //     println!("Individual fitness: {}", individual.fitness);
-        //     println!("Number of nodes: {}", individual.genome.nodes.len());
-        //     // println!("Number of connections: {}", individual.genome.connections.len());
-        // }
+        self.update_fitnesses();
+
+        for species in self.species.iter() {
+            // println!("Species size: {}", species.members.len());
+            for individual in species.members.iter() {
+                println!("Individual fitness: {}", individual.fitness);
+                // println!("Number of nodes: {}", individual.genome.nodes.len());
+                // println!("Number of connections: {}", individual.genome.connections.len());
+            }
+        }
     }
 }
 
@@ -1136,5 +1162,35 @@ mod tests {
         assert_eq!(neat.species.len(), 2);
         assert_eq!(neat.species[0].members.len(), 1);
         assert_eq!(neat.species[1].members.len(), 1);
+    }
+
+    #[test]
+    fn test_offsprings_split_different_fitnesses() {
+        let mut neat = Neat::new(config);
+        neat.species = vec![
+            Species::new(Individual::new(Genome::new())),
+            Species::new(Individual::new(Genome::new())),
+        ];
+
+        neat.species[0].members[0].fitness = 1.;
+        neat.species[1].members[0].fitness = 0.;
+
+        let offsprings_split = neat.get_offsprings_split();
+        assert_eq!(offsprings_split, vec![10, 0]);
+    }
+
+    #[test]
+    fn test_offsprings_split_same_fitnesses() {
+        let mut neat = Neat::new(config);
+        neat.species = vec![
+            Species::new(Individual::new(Genome::new())),
+            Species::new(Individual::new(Genome::new())),
+        ];
+
+        neat.species[0].members[0].fitness = 1.;
+        neat.species[1].members[0].fitness = 1.;
+
+        let offsprings_split = neat.get_offsprings_split();
+        assert_eq!(offsprings_split, vec![5, 5]);
     }
 }

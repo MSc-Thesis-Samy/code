@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 pub type ActivationFunction = fn(f32) -> f32;
 
-pub const SIGMOID: ActivationFunction = |x| 1. / (1. + (-x).exp());
+pub const SIGMOID: ActivationFunction = |x| 1. / (1. + (-4.9 * x).exp());
 pub const IDENTITY: ActivationFunction = |x| x;
 
 #[derive(Debug)]
