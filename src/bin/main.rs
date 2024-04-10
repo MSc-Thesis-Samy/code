@@ -17,9 +17,9 @@ fn main() {
     let dim = 2;
 
     let problem = match cli.problem {
-        Problem::Half => SphereClassificationProblem::Half(UNIT_CIRCLE_STEPS),
-        Problem::Quarter => SphereClassificationProblem::Quarter(UNIT_CIRCLE_STEPS),
-        Problem::TwoQuarters => SphereClassificationProblem::TwoQuarters(UNIT_CIRCLE_STEPS),
+        Problem::Half => ClassificationProblem::SphereProblem(SphereClassificationProblem::Half(UNIT_CIRCLE_STEPS)),
+        Problem::Quarter => ClassificationProblem::SphereProblem(SphereClassificationProblem::Quarter(UNIT_CIRCLE_STEPS)),
+        Problem::TwoQuarters => ClassificationProblem::SphereProblem(SphereClassificationProblem::TwoQuarters(UNIT_CIRCLE_STEPS)),
     };
 
     match cli.algorithm {

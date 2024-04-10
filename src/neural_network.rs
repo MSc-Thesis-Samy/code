@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-pub type ActivationFunction = fn(f32) -> f32;
+pub type ActivationFunction = fn(f64) -> f64;
 
 pub const SIGMOID: ActivationFunction = |x| 1. / (1. + (-4.9 * x).exp());
 pub const IDENTITY: ActivationFunction = |x| x;
@@ -8,7 +8,7 @@ pub const IDENTITY: ActivationFunction = |x| x;
 #[derive(Debug)]
 pub struct NeuronInput {
     input_id: u32,
-    weight: f32,
+    weight: f64,
 }
 
 #[derive(Debug)]
@@ -27,7 +27,7 @@ pub struct NeuralNetwork {
 }
 
 impl NeuronInput {
-    pub fn new(input_id: u32, weight: f32) -> NeuronInput {
+    pub fn new(input_id: u32, weight: f64) -> NeuronInput {
         NeuronInput {
             input_id,
             weight,
@@ -55,8 +55,8 @@ impl NeuralNetwork {
         }
     }
 
-    pub fn feed_forward(&self, inputs: &Vec<f32>) -> Vec<f32> {
-        let mut values = HashMap::<u32, f32>::new();
+    pub fn feed_forward(&self, inputs: &Vec<f64>) -> Vec<f64> {
+        let mut values = HashMap::<u32, f64>::new();
 
         for input_id in self.input_ids.iter() {
             values.insert(*input_id, inputs[*input_id as usize - 1]);
@@ -83,7 +83,7 @@ impl NeuralNetwork {
             values.insert(neuron.id, (neuron.activation)(sum));
         }
 
-        let mut outputs = Vec::<f32>::new();
+        let mut outputs = Vec::<f64>::new();
         for output_id in self.output_ids.iter() {
             outputs.push(*values.get(output_id).unwrap());
         }

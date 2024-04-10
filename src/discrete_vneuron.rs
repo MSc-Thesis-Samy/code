@@ -4,7 +4,7 @@ use rand::prelude::*;
 use crate::benchmarks::ClassificationProblemEval;
 use crate::utils::*;
 use crate::neuroevolution_algorithm::*;
-use crate::benchmarks::SphereClassificationProblem;
+use crate::benchmarks::ClassificationProblem;
 
 #[derive(Debug, Clone)]
 pub struct DiscreteVNeuron {
@@ -67,7 +67,7 @@ impl DiscreteVNeuron {
 }
 
 impl NeuroevolutionAlgorithm for DiscreteVNeuron {
-    fn optimization_step(&mut self, problem: &SphereClassificationProblem) {
+    fn optimization_step(&mut self, problem: &ClassificationProblem) {
         let mut new_vneuron = self.clone();
         if random::<f64>() < 1. / (self.dim + 1) as f64 {
             new_vneuron.bend = DiscreteVNeuron::mutate_component(self.bend, self.resolution);
@@ -87,7 +87,7 @@ impl NeuroevolutionAlgorithm for DiscreteVNeuron {
     }
 
     #[allow(unused_variables)]
-    fn optimize_cmaes(&mut self, problem: &SphereClassificationProblem) {
+    fn optimize_cmaes(&mut self, problem: &ClassificationProblem) {
         unimplemented!()
     }
 

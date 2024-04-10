@@ -4,12 +4,19 @@ use crate::neuroevolution_algorithm::*;
 pub type LabeledPoint = (Vec<f64>, bool);
 pub type LabeledPoints = Vec<LabeledPoint>;
 
+#[derive(Debug)]
 pub enum SphereClassificationProblem {
     Half(u32),
     Quarter(u32),
     TwoQuarters(u32),
     Square,
     Cube,
+}
+
+#[derive(Debug)]
+pub enum ClassificationProblem {
+    SphereProblem(SphereClassificationProblem),
+    Xor,
 }
 
 pub trait ClassificationProblemEval {
@@ -27,6 +34,27 @@ pub trait ClassificationProblemEval {
                 }
             })
             .sum::<f64>() / points.len() as f64
+    }
+}
+
+impl ClassificationProblemEval for ClassificationProblem {
+    fn get_points(&self) -> LabeledPoints {
+        match self {
+            ClassificationProblem::SphereProblem(problem) => problem.get_points(),
+            ClassificationProblem::Xor => vec![
+                (vec![0., 0.], false),
+                (vec![0., 1.], true),
+                (vec![1., 0.], true),
+                (vec![1., 1.], false),
+            ]
+        }
+    }
+
+    fn evaluate(&self, alg: &Algorithm) -> f64 {
+        match self {
+            ClassificationProblem::SphereProblem(problem) => problem.evaluate(alg),
+            ClassificationProblem::Xor => unimplemented!()
+        }
     }
 }
 

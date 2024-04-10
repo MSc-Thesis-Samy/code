@@ -1,8 +1,10 @@
 use rand::prelude::*;
 use rand_distr::Normal;
+use crate::benchmarks::ClassificationProblemEval;
 use crate::neural_network::*;
+use crate::neuroevolution_algorithm::*;
+use crate::benchmarks::ClassificationProblem;
 
-type EvaluationFunction = fn(&Individual) -> f32;
 type Population = Vec<Individual>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -24,7 +26,7 @@ struct NodeGene {
 struct ConnectionGene {
     in_node: u32,
     out_node: u32,
-    weight: f32,
+    weight: f64,
     enabled: bool,
     innovation: u32,
 }
@@ -38,7 +40,7 @@ struct Genome {
 #[derive(Clone, Debug)]
 pub struct Individual {
     genome: Genome,
-    fitness: f32,
+    fitness: f64,
 }
 
 #[derive(Debug)]
@@ -56,37 +58,39 @@ struct History {
     generation: u32,
 }
 
+#[derive(Debug)]
 pub struct Config {
     pub population_size: u32,
     pub n_inputs: u32,
     pub n_outputs: u32,
     pub n_generations: u32,
-    pub evaluation_function: EvaluationFunction,
-    pub weights_mean: f32,
-    pub weights_stddev: f32,
-    pub perturbation_stddev: f32,
-    pub new_weight_probability: f32,
-    pub enable_probability: f32,
-    pub survival_threshold: f32,
-    pub connection_mutation_rate: f32,
-    pub node_mutation_rate: f32,
-    pub weight_mutation_rate: f32,
-    pub similarity_threshold: f32,
-    pub excess_weight: f32,
-    pub disjoint_weight: f32,
-    pub matching_weight: f32,
+    pub problem: ClassificationProblem,
+    pub weights_mean: f64,
+    pub weights_stddev: f64,
+    pub perturbation_stddev: f64,
+    pub new_weight_probability: f64,
+    pub enable_probability: f64,
+    pub survival_threshold: f64,
+    pub connection_mutation_rate: f64,
+    pub node_mutation_rate: f64,
+    pub weight_mutation_rate: f64,
+    pub similarity_threshold: f64,
+    pub excess_weight: f64,
+    pub disjoint_weight: f64,
+    pub matching_weight: f64,
     pub champion_copy_threshold: usize,
     pub stagnation_threshold: u32,
 }
 
+#[derive(Debug)]
 struct Species {
     representative: Individual,
     members: Population,
-    appearance_generation: u32,
     latest_improvement: u32,
-    max_fitness: f32,
+    max_fitness: f64,
 }
 
+#[derive(Debug)]
 pub struct Neat {
     history: History,
     config: Config,
@@ -100,7 +104,7 @@ impl NodeGene {
 }
 
 impl ConnectionGene {
-    fn new(in_node: u32, out_node: u32, weight: f32, enabled: bool, innovation: u32) -> ConnectionGene {
+    fn new(in_node: u32, out_node: u32, weight: f64, enabled: bool, innovation: u32) -> ConnectionGene {
         ConnectionGene { in_node, out_node, weight, enabled, innovation }
     }
 }
@@ -135,7 +139,7 @@ impl Individual {
         }
     }
 
-    fn mutate_add_connection(&mut self, history: &mut History, distribution: &Normal<f32>) {
+    fn mutate_add_connection(&mut self, history: &mut History, distribution: &Normal<f64>) {
         let in_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Output).collect::<Vec<_>>();
         let out_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Input && n.layer != NodeType::Bias).collect::<Vec<_>>();
 
@@ -220,10 +224,10 @@ impl Individual {
         history.mutations.push((Mutation::NewNode(new_node.clone(), in_new_connection.clone(), new_out_connection.clone()), history.generation));
     }
 
-    fn mutate_weights(&mut self, weights_distribution: &Normal<f32>, perturbation_distribution: &Normal<f32>, new_weight_probability: f32) {
+    fn mutate_weights(&mut self, weights_distribution: &Normal<f64>, perturbation_distribution: &Normal<f64>, new_weight_probability: f64) {
         let mut rng = thread_rng();
         for connection in self.genome.connections.iter_mut() {
-            if rng.gen::<f32>() < new_weight_probability {
+            if rng.gen::<f64>() < new_weight_probability {
                 connection.weight = weights_distribution.sample(&mut thread_rng());
             }
             else {
@@ -232,10 +236,10 @@ impl Individual {
         }
     }
 
-    fn enable_connections(&mut self, enable_probability: f32) {
+    fn enable_connections(&mut self, enable_probability: f64) {
         let mut rng = thread_rng();
         for connection in self.genome.connections.iter_mut() {
-            if rng.gen::<f32>() < enable_probability {
+            if rng.gen::<f64>() < enable_probability {
                 connection.enabled = true;
             }
         }
@@ -363,12 +367,7 @@ impl Individual {
         NeuralNetwork::new(input_ids, output_ids, bias.map(|(id, _)| id), neurons)
     }
 
-    pub fn evaluate(&self, input: &Vec<f32>) -> Vec<f32> {
-        let network = self.to_neural_network();
-        network.feed_forward(input)
-    }
-
-    fn similarity(&self, other_individual: &Self, excess_weight: f32, disjoint_weight: f32, matching_weight: f32) -> f32 {
+    fn similarity(&self, other_individual: &Self, excess_weight: f64, disjoint_weight: f64, matching_weight: f64) -> f64 {
         let disjoint_excess_count = |p1: &[ConnectionGene], p2: &[ConnectionGene]| -> (u32, u32) {
             let mut disjoint = 0;
             let mut excess = 0;
@@ -391,17 +390,17 @@ impl Individual {
                 }
             }
 
-            if let Some(c1) = conn1 {
+            if let Some(_) = conn1 {
                 excess = iter1.count() as u32 + 1;
             }
-            else if let Some(c2) = conn2 {
+            else if let Some(_) = conn2 {
                 excess = iter2.count() as u32 + 1;
             }
 
             (disjoint, excess)
         };
 
-        let matching_weight_difference = |p1: &[ConnectionGene], p2: &[ConnectionGene]| -> f32 {
+        let matching_weight_difference = |p1: &[ConnectionGene], p2: &[ConnectionGene]| -> f64 {
             let mut sum = 0.;
             let mut iter1 = p1.iter();
             let mut iter2 = p2.iter();
@@ -428,9 +427,27 @@ impl Individual {
         let matching = matching_weight_difference(&self.genome.connections, &other_individual.genome.connections);
         let max_genes_number = self.genome.connections.len().max(other_individual.genome.connections.len());
 
-        let weighted_sum = excess_weight * excess as f32 / max_genes_number as f32 + disjoint_weight * disjoint as f32 / max_genes_number as f32 + matching_weight * matching;
-        // println!("Weighted sum: {}", weighted_sum);
+        let weighted_sum = excess_weight * excess as f64 / max_genes_number as f64 + disjoint_weight * disjoint as f64 / max_genes_number as f64 + matching_weight * matching;
         weighted_sum
+    }
+
+    fn evaluate(&self, input: &Vec<f64>) -> Vec<f64> {
+        let network = self.to_neural_network();
+        network.feed_forward(input)
+    }
+
+    fn update_fitness(&mut self, problem: &ClassificationProblem) {
+        let points = problem.get_points();
+        let distances_sum = points
+            .iter()
+            .map(|(point, label)| {
+                let output = self.evaluate(point);
+                let label = if *label { 1. } else { 0. };
+                (output[0] - label).abs()
+            })
+            .sum::<f64>();
+
+        self.fitness = points.len() as f64 - distances_sum;
     }
 }
 
@@ -450,8 +467,7 @@ impl Species {
         Species {
             representative: representative.clone(),
             members: vec![representative],
-            appearance_generation,
-            latest_improvement: 0,
+            latest_improvement: appearance_generation,
             max_fitness: 0.,
         }
     }
@@ -489,7 +505,7 @@ impl Neat {
         let n_outputs = self.config.n_outputs;
         let population_size = self.config.population_size;
 
-        let get_initial_individual = |n_inputs, n_outputs, distributions: &Normal<f32>| {
+        let get_initial_individual = |n_inputs, n_outputs, distributions: &Normal<f64>| {
             let mut genome = Genome::new();
 
             for i in 1..=n_inputs {
@@ -545,6 +561,7 @@ impl Neat {
 
         let population = (0..population_size).map(|_| get_initial_individual(n_inputs, n_outputs, &weights_distribution)).collect::<Vec<_>>();
         self.update_species(population);
+        self.update_fitnesses();
     }
 
     fn assign_to_species(&mut self, individual: Individual) {
@@ -584,7 +601,7 @@ impl Neat {
     fn update_fitnesses(&mut self) {
         for species in self.species.iter_mut() {
             for individual in species.members.iter_mut() {
-                individual.fitness = (self.config.evaluation_function)(individual);
+                individual.update_fitness(&self.config.problem);
                 if individual.fitness > species.max_fitness {
                     species.max_fitness = individual.fitness;
                     species.latest_improvement = self.history.generation;
@@ -595,11 +612,11 @@ impl Neat {
 
     fn get_offsprings_split(&self) -> Vec<u32> {
         let mut offsprings = Vec::new();
-        let total_fitness = self.species.iter().map(|s| s.members.iter().map(|i| i.fitness).sum::<f32>()).sum::<f32>();
+        let total_fitness = self.species.iter().map(|s| s.members.iter().map(|i| i.fitness).sum::<f64>()).sum::<f64>();
 
         for species in self.species.iter() {
-            let species_fitness = species.members.iter().map(|i| i.fitness).sum::<f32>();
-            let offsprings_nb = (species_fitness / total_fitness * self.config.population_size as f32).round() as u32;
+            let species_fitness = species.members.iter().map(|i| i.fitness).sum::<f64>();
+            let offsprings_nb = (species_fitness / total_fitness * self.config.population_size as f64).round() as u32;
             offsprings.push(offsprings_nb);
         }
 
@@ -611,7 +628,6 @@ impl Neat {
     }
 
     fn next_generation(&mut self) {
-        self.update_fitnesses();
         self.remove_stagnated_species();
 
         self.history.generation += 1;
@@ -628,7 +644,7 @@ impl Neat {
             let mut offsprings = Vec::new();
             let mut sorted_members = species.members.clone();
             sorted_members.sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
-            let survival_cutoff = (species.len() as f32 * self.config.survival_threshold) as usize;
+            let survival_cutoff = (species.len() as f64 * self.config.survival_threshold) as usize;
             let survivors = &sorted_members[..=survival_cutoff];
 
             if species.len() >= self.config.champion_copy_threshold {
@@ -641,15 +657,15 @@ impl Neat {
 
                 let mut child = Individual::crossover(parent1, parent2);
 
-                if rng.gen::<f32>() < self.config.connection_mutation_rate {
+                if rng.gen::<f64>() < self.config.connection_mutation_rate {
                     child.mutate_add_connection(&mut self.history, &weights_distribution);
                 }
 
-                if rng.gen::<f32>() < self.config.node_mutation_rate {
+                if rng.gen::<f64>() < self.config.node_mutation_rate {
                     child.mutate_add_node(&mut self.history);
                 }
 
-                if rng.gen::<f32>() < self.config.weight_mutation_rate {
+                if rng.gen::<f64>() < self.config.weight_mutation_rate {
                     child.mutate_weights(&weights_distribution, &perturbation_distribution, self.config.new_weight_probability);
                 }
 
@@ -663,25 +679,30 @@ impl Neat {
 
         self.update_species(new_population);
         println!("Number of species: {}", self.species.len());
+        self.update_fitnesses();
     }
 
-    pub fn run(&mut self) {
-        self.initialize();
+    pub fn get_best_individual_fitness(&self) -> f64 {
+        let best_individual = self.species.iter().map(|s| s.members.iter().max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap()).unwrap()).max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap()).unwrap();
+        best_individual.fitness
+    }
+}
 
-        for i in 1..=self.config.n_generations {
-            self.next_generation();
+impl NeuroevolutionAlgorithm for Neat {
+    fn optimization_step(&mut self, _problem: &ClassificationProblem) {
+        if self.history.generation == 0 {
+            self.initialize();
         }
 
-        self.update_fitnesses();
+        self.next_generation();
+    }
 
-        for species in self.species.iter() {
-            println!("Species size: {}", species.len());
-            for individual in species.members.iter() {
-                println!("Individual fitness: {}", individual.fitness);
-                // println!("Number of nodes: {}", individual.genome.nodes.len());
-                // println!("Number of connections: {}", individual.genome.connections.len());
-            }
-        }
+    fn optimize_cmaes(&mut self, _problem: &ClassificationProblem) {
+        unimplemented!()
+    }
+
+    fn evaluate(&self, _input: &Vec<f64>) -> bool {
+        unimplemented!()
     }
 }
 
@@ -691,10 +712,10 @@ mod tests {
 
     const config: Config = Config {
         population_size: 10,
-        n_inputs: 3,
-        n_outputs: 2,
+        n_inputs: 2,
+        n_outputs: 1,
         n_generations: 10,
-        evaluation_function: |_: &Individual| 0.0,
+        problem: ClassificationProblem::Xor,
         weights_mean: 0.0,
         weights_stddev: 1.0,
         perturbation_stddev: 1.,
@@ -938,17 +959,17 @@ mod tests {
 
         let population_size = neat.species.iter().map(|s| s.len()).sum::<usize>();
         assert_eq!(population_size, 10);
-        assert_eq!(neat.history.innovation, 8);
-        assert_eq!(neat.history.nodes_nb, 6);
+        assert_eq!(neat.history.innovation, 3);
+        assert_eq!(neat.history.nodes_nb, 4);
 
         let individual = &neat.species[0].members[0];
-        assert_eq!(individual.genome.nodes.len(), 6);
-        assert_eq!(individual.genome.connections.len(), 8);
+        assert_eq!(individual.genome.nodes.len(), 4);
+        assert_eq!(individual.genome.connections.len(), 3);
 
         let node_ids = individual.genome.nodes.iter().map(|n| n.id).collect::<Vec<_>>();
-        assert_eq!(node_ids, vec![1, 2, 3, 4, 5, 6]);
+        assert_eq!(node_ids, vec![1, 2, 3, 4]);
         let innovation_ids = individual.genome.connections.iter().map(|c| c.innovation).collect::<Vec<_>>();
-        assert_eq!(innovation_ids, vec![1, 2, 3, 4, 5, 6, 7, 8]);
+        assert_eq!(innovation_ids, vec![1, 2, 3]);
     }
 
     #[test]

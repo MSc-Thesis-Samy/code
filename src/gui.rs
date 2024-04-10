@@ -1,17 +1,17 @@
 use std::f64::consts::PI;
 use ggez::*;
 use crate::neuroevolution_algorithm::*;
-use crate::benchmarks::{SphereClassificationProblem, ClassificationProblemEval};
+use crate::benchmarks::{ClassificationProblem, ClassificationProblemEval};
 
 pub struct State {
     alg: Algorithm,
-    problem: SphereClassificationProblem,
+    problem: ClassificationProblem,
     n_iters: u32,
     iteration: u32,
 }
 
 impl State {
-    pub fn new(alg: Algorithm, problem: SphereClassificationProblem, n_iters: u32) -> Self {
+    pub fn new(alg: Algorithm, problem: ClassificationProblem, n_iters: u32) -> Self {
         State {
             alg,
             problem,
@@ -208,6 +208,7 @@ impl ggez::event::EventHandler<GameError> for State {
 
                 self.get_bend_decision_mesh(mesh, bias, angle, d_normal, d_bend, bend)?;
             }
+            Algorithm::Neat(_neat) => { }
         }
 
         let mut text = graphics::Text::new(format!("Iteration: {}\nFitness: {}", self.iteration, self.problem.evaluate(&self.alg)));

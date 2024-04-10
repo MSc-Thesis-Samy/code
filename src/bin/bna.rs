@@ -5,9 +5,9 @@ use neuroevolution::neuroevolution_algorithm::*;
 use neuroevolution::constants::*;
 
 fn main() {
-    let half = SphereClassificationProblem::Half(UNIT_CIRCLE_STEPS);
-    let quarter = SphereClassificationProblem::Quarter(UNIT_CIRCLE_STEPS);
-    let two_quarters = SphereClassificationProblem::TwoQuarters(UNIT_CIRCLE_STEPS);
+    let half = ClassificationProblem::SphereProblem(SphereClassificationProblem::Half(UNIT_CIRCLE_STEPS));
+    let quarter = ClassificationProblem::SphereProblem(SphereClassificationProblem::Quarter(UNIT_CIRCLE_STEPS));
+    let two_quarters = ClassificationProblem::SphereProblem(SphereClassificationProblem::TwoQuarters(UNIT_CIRCLE_STEPS));
 
     let vneuron = VNeuron::new(2);
     let mut alg = Algorithm::ContinuousBNA(vneuron);

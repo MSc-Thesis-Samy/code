@@ -1,17 +1,6 @@
 use neuroevolution::neat::*;
-
-fn xor(individual: &Individual) -> f32 {
-    let inputs = vec![vec![0., 0.], vec![0., 1.], vec![1., 0.], vec![1., 1.]];
-    let outputs = vec![0., 1., 1., 0.];
-
-    let mut distance_sum = 0.;
-    for (input, output) in inputs.iter().zip(outputs.iter()) {
-        let result = individual.evaluate(input)[0];
-        distance_sum += (result - output).abs();
-    }
-
-    4. - distance_sum
-}
+use neuroevolution::benchmarks::ClassificationProblem;
+use neuroevolution::neuroevolution_algorithm::*;
 
 fn main() {
     let config = Config {
@@ -19,7 +8,7 @@ fn main() {
         n_inputs: 2,
         n_outputs: 1,
         n_generations: 1500,
-        evaluation_function: xor,
+        problem: ClassificationProblem::Xor,
         weights_mean: 0.,
         weights_stddev: 0.8,
         perturbation_stddev: 0.2,
@@ -29,14 +18,15 @@ fn main() {
         connection_mutation_rate: 0.3,
         node_mutation_rate: 0.03,
         weight_mutation_rate: 0.8,
-        similarity_threshold: 4.5,
+        similarity_threshold: 15.0,
         excess_weight: 1.,
         disjoint_weight: 1.,
-        matching_weight: 0.2,
+        matching_weight: 0.3,
         champion_copy_threshold: 5,
-        stagnation_threshold: 150,
+        stagnation_threshold: 1500,
     };
 
     let mut neat = Neat::new(config);
-    neat.run();
+    neat.optimize(&ClassificationProblem::Xor, 1500);
+    println!("Fitness: {:.2}", neat.get_best_individual_fitness());
 }
