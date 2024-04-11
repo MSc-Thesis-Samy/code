@@ -429,7 +429,7 @@ impl Individual {
         weighted_sum
     }
 
-    fn evaluate(&self, input: &Vec<f64>) -> Vec<f64> {
+    pub fn evaluate(&self, input: &Vec<f64>) -> Vec<f64> {
         let network = self.to_neural_network();
         network.feed_forward(input)
     }
@@ -680,8 +680,16 @@ impl Neat {
         self.update_fitnesses(problem);
     }
 
+    pub fn get_best_individual(&self) -> &Individual {
+        self.species
+            .iter()
+            .flat_map(|s| s.members.iter())
+            .max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap_or(std::cmp::Ordering::Equal))
+            .unwrap()
+    }
+
     pub fn get_best_individual_fitness(&self) -> f64 {
-        let best_individual = self.species.iter().map(|s| s.members.iter().max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap()).unwrap()).max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap()).unwrap();
+        let best_individual = self.get_best_individual();
         best_individual.fitness
     }
 }
@@ -729,6 +737,7 @@ mod tests {
         stagnation_threshold: 15,
     };
 
+    const problem: ClassificationProblem = ClassificationProblem::Xor;
 
     #[test]
     fn test_crossover() {
@@ -951,7 +960,7 @@ mod tests {
     #[test]
     fn test_population_initialization() {
         let mut neat = Neat::new(config);
-        neat.initialize();
+        neat.initialize(&problem);
 
         let population_size = neat.species.iter().map(|s| s.len()).sum::<usize>();
         assert_eq!(population_size, 10);

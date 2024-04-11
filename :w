@@ -216,9 +216,9 @@ impl State {
                     );
                     let point = self.cartesian_to_canvas((point[0], point[1]));
                     mesh.circle(
-                        graphics::DrawMode::stroke(8.0),
+                        graphics::DrawMode::stroke(6.0),
                         point,
-                        20.0,
+                        25.0,
                         0.1,
                         color,
                     )?;
