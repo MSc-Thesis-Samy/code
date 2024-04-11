@@ -22,18 +22,25 @@ pub enum ClassificationProblem {
 pub trait ClassificationProblemEval {
     fn get_points(&self) -> LabeledPoints;
     fn evaluate(&self, alg: &Algorithm) -> f64 {
-        let points = self.get_points();
-        points
-            .iter()
-            .map(|(point, label)| {
-                let output = alg.evaluate(point);
-                if output && *label || !output && !*label {
-                    1.
-                } else {
-                    0.
-                }
-            })
-            .sum::<f64>() / points.len() as f64
+        match alg {
+            Algorithm::Neat(neat) => {
+                neat.get_best_individual_fitness()
+            }
+            _ => {
+                let points = self.get_points();
+                points
+                    .iter()
+                    .map(|(point, label)| {
+                        let output = alg.evaluate(point);
+                        if output && *label || !output && !*label {
+                            1.
+                        } else {
+                            0.
+                        }
+                    })
+                    .sum::<f64>() / points.len() as f64
+            }
+        }
     }
 }
 
@@ -47,13 +54,6 @@ impl ClassificationProblemEval for ClassificationProblem {
                 (vec![1., 0.], true),
                 (vec![1., 1.], false),
             ]
-        }
-    }
-
-    fn evaluate(&self, alg: &Algorithm) -> f64 {
-        match self {
-            ClassificationProblem::SphereProblem(problem) => problem.evaluate(alg),
-            ClassificationProblem::Xor => unimplemented!()
         }
     }
 }

@@ -10,6 +10,7 @@ use neuroevolution::neuroevolution_algorithm::{NeuroevolutionAlgorithm, Algorith
 use neuroevolution::benchmarks::*;
 use neuroevolution::constants::*;
 use neuroevolution::gui::*;
+use neuroevolution::neat::*;
 
 fn main() {
     let cli = Cli::parse();
@@ -20,6 +21,7 @@ fn main() {
         Problem::Half => ClassificationProblem::SphereProblem(SphereClassificationProblem::Half(UNIT_CIRCLE_STEPS)),
         Problem::Quarter => ClassificationProblem::SphereProblem(SphereClassificationProblem::Quarter(UNIT_CIRCLE_STEPS)),
         Problem::TwoQuarters => ClassificationProblem::SphereProblem(SphereClassificationProblem::TwoQuarters(UNIT_CIRCLE_STEPS)),
+        Problem::Xor => ClassificationProblem::Xor,
     };
 
     match cli.algorithm {
@@ -47,6 +49,33 @@ fn main() {
                 }
             }
         }
+        AlgorithmType::Neat => {
+            let config = Config {
+                population_size: 150,
+                n_inputs: 2,
+                n_outputs: 1,
+                n_generations: 1500,
+                problem: ClassificationProblem::Xor,
+                weights_mean: 0.,
+                weights_stddev: 0.8,
+                perturbation_stddev: 0.2,
+                new_weight_probability: 0.1,
+                enable_probability: 0.25,
+                survival_threshold: 0.25,
+                connection_mutation_rate: 0.3,
+                node_mutation_rate: 0.03,
+                weight_mutation_rate: 0.8,
+                similarity_threshold: 15.0,
+                excess_weight: 1.,
+                disjoint_weight: 1.,
+                matching_weight: 0.3,
+                champion_copy_threshold: 5,
+                stagnation_threshold: 1500,
+            };
+
+            let neat = Neat::new(config);
+            alg = Algorithm::Neat(neat);
+        }
     }
 
     match cli.gui {
@@ -62,7 +91,6 @@ fn main() {
             alg.optimize(&problem, cli.iterations);
 
             println!("fitness: {:.2}", problem.evaluate(&alg));
-            print!("{}", alg);
         }
     }
 }

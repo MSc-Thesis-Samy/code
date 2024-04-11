@@ -678,7 +678,7 @@ impl Neat {
         }
 
         self.update_species(new_population);
-        println!("Number of species: {}", self.species.len());
+        // println!("Number of species: {}", self.species.len());
         self.update_fitnesses();
     }
 

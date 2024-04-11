@@ -27,6 +27,7 @@ pub struct Cli {
 pub enum AlgorithmType {
     Oneplusonena,
     Bna,
+    Neat,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
@@ -34,4 +35,5 @@ pub enum Problem {
     Half,
     Quarter,
     TwoQuarters,
+    Xor,
 }
