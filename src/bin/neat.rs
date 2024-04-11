@@ -7,8 +7,6 @@ fn main() {
         population_size: 150,
         n_inputs: 2,
         n_outputs: 1,
-        n_generations: 1500,
-        problem: ClassificationProblem::Xor,
         weights_mean: 0.,
         weights_stddev: 0.8,
         perturbation_stddev: 0.2,

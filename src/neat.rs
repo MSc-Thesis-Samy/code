@@ -63,8 +63,6 @@ pub struct Config {
     pub population_size: u32,
     pub n_inputs: u32,
     pub n_outputs: u32,
-    pub n_generations: u32,
-    pub problem: ClassificationProblem,
     pub weights_mean: f64,
     pub weights_stddev: f64,
     pub perturbation_stddev: f64,
@@ -499,7 +497,7 @@ impl Neat {
         }
     }
 
-    pub fn initialize(&mut self) {
+    pub fn initialize(&mut self, problem: &ClassificationProblem) {
         let weights_distribution = Normal::new(self.config.weights_mean, self.config.weights_stddev).unwrap();
         let n_inputs = self.config.n_inputs;
         let n_outputs = self.config.n_outputs;
@@ -561,7 +559,7 @@ impl Neat {
 
         let population = (0..population_size).map(|_| get_initial_individual(n_inputs, n_outputs, &weights_distribution)).collect::<Vec<_>>();
         self.update_species(population);
-        self.update_fitnesses();
+        self.update_fitnesses(problem);
     }
 
     fn assign_to_species(&mut self, individual: Individual) {
@@ -598,10 +596,10 @@ impl Neat {
         }
     }
 
-    fn update_fitnesses(&mut self) {
+    fn update_fitnesses(&mut self, problem: &ClassificationProblem) {
         for species in self.species.iter_mut() {
             for individual in species.members.iter_mut() {
-                individual.update_fitness(&self.config.problem);
+                individual.update_fitness(problem);
                 if individual.fitness > species.max_fitness {
                     species.max_fitness = individual.fitness;
                     species.latest_improvement = self.history.generation;
@@ -627,7 +625,7 @@ impl Neat {
         self.species.retain(|species| self.history.generation - species.latest_improvement < self.config.stagnation_threshold);
     }
 
-    fn next_generation(&mut self) {
+    fn next_generation(&mut self, problem: &ClassificationProblem) {
         self.remove_stagnated_species();
 
         self.history.generation += 1;
@@ -679,7 +677,7 @@ impl Neat {
 
         self.update_species(new_population);
         // println!("Number of species: {}", self.species.len());
-        self.update_fitnesses();
+        self.update_fitnesses(problem);
     }
 
     pub fn get_best_individual_fitness(&self) -> f64 {
@@ -689,12 +687,12 @@ impl Neat {
 }
 
 impl NeuroevolutionAlgorithm for Neat {
-    fn optimization_step(&mut self, _problem: &ClassificationProblem) {
+    fn optimization_step(&mut self, problem: &ClassificationProblem) {
         if self.history.generation == 0 {
-            self.initialize();
+            self.initialize(problem);
         }
 
-        self.next_generation();
+        self.next_generation(problem);
     }
 
     fn optimize_cmaes(&mut self, _problem: &ClassificationProblem) {
@@ -714,8 +712,6 @@ mod tests {
         population_size: 10,
         n_inputs: 2,
         n_outputs: 1,
-        n_generations: 10,
-        problem: ClassificationProblem::Xor,
         weights_mean: 0.0,
         weights_stddev: 1.0,
         perturbation_stddev: 1.,
