@@ -2,7 +2,7 @@
 
 ## Usage
 
-```bash
+```
 Neuroevolution framework for testing algorithms on benchmark problems.
 
 Usage: main [OPTIONS] <ALGORITHM> <PROBLEM>
