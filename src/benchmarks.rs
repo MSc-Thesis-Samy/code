@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 use crate::neuroevolution_algorithm::*;
 
-pub type LabeledPoint = (Vec<f64>, bool);
+pub type LabeledPoint = (Vec<f64>, f64);
 pub type LabeledPoints = Vec<LabeledPoint>;
 
 #[derive(Debug)]
@@ -28,17 +28,14 @@ pub trait ClassificationProblemEval {
             }
             _ => {
                 let points = self.get_points();
-                points
+                let distances_sum = points
                     .iter()
                     .map(|(point, label)| {
                         let output = alg.evaluate(point);
-                        if output && *label || !output && !*label {
-                            1.
-                        } else {
-                            0.
-                        }
+                        (output - *label).abs()
                     })
-                    .sum::<f64>() / points.len() as f64
+                    .sum::<f64>() / points.len() as f64;
+                (points.len() as f64 - distances_sum) / points.len() as f64
             }
         }
     }
@@ -49,10 +46,10 @@ impl ClassificationProblemEval for ClassificationProblem {
         match self {
             ClassificationProblem::SphereProblem(problem) => problem.get_points(),
             ClassificationProblem::Xor => vec![
-                (vec![0., 0.], false),
-                (vec![0., 1.], true),
-                (vec![1., 0.], true),
-                (vec![1., 1.], false),
+                (vec![0., 0.], 0.),
+                (vec![0., 1.], 1.),
+                (vec![1., 0.], 1.),
+                (vec![1., 1.], 0.),
             ]
         }
     }
@@ -65,7 +62,7 @@ impl ClassificationProblemEval for SphereClassificationProblem {
                 (0..*n)
                     .map(|i| {
                         let angle = 2. * PI * i as f64 / *n as f64;
-                        (vec![1., angle], angle <= PI)
+                        (vec![1., angle], if angle <= PI { 1. } else { 0. })
                     })
                     .collect::<LabeledPoints>()
             }
@@ -73,7 +70,7 @@ impl ClassificationProblemEval for SphereClassificationProblem {
                 (0..*n)
                     .map(|i| {
                         let angle = 2. * PI * i as f64 / *n as f64;
-                        (vec![1., angle], angle <= PI / 2.)
+                        (vec![1., angle], if angle <= PI / 2. { 1. } else { 0. })
                     })
                     .collect::<LabeledPoints>()
             }
@@ -81,28 +78,28 @@ impl ClassificationProblemEval for SphereClassificationProblem {
                 (0..*n)
                     .map(|i| {
                         let angle = 2. * PI * i as f64 / *n as f64;
-                        (vec![1., angle], angle <= PI / 2. || angle >= PI && angle <= 3. * PI / 2.)
+                        (vec![1., angle], if angle <= PI / 2. || angle >= 3. * PI / 2. { 1. } else { 0. })
                     })
                     .collect::<LabeledPoints>()
             }
             SphereClassificationProblem::Square => {
                 vec![
-                    (vec![1., PI / 4.], true),
-                    (vec![1., 3. * PI / 4.], false),
-                    (vec![1., 5. * PI / 4.], true),
-                    (vec![1., 7. * PI / 4.], false),
+                    (vec![1., PI / 4.], 0.),
+                    (vec![1., 3. * PI / 4.], 1.),
+                    (vec![1., 5. * PI / 4.], 0.),
+                    (vec![1., 7. * PI / 4.], 1.),
                 ]
             }
             SphereClassificationProblem::Cube => {
                 vec![
-                    (vec![1., PI / 4., PI / 4.], true),
-                    (vec![1., 3. * PI / 4., PI / 4.], false),
-                    (vec![1., 5. * PI / 4., PI / 4.], true),
-                    (vec![1., 7. * PI / 4., PI / 4.], false),
-                    (vec![1., PI / 4., 3. * PI / 4.], true),
-                    (vec![1., 3. * PI / 4., 3. * PI / 4.], false),
-                    (vec![1., 5. * PI / 4., 3. * PI / 4.], true),
-                    (vec![1., 7. * PI / 4., 3. * PI / 4.], false),
+                    (vec![1., PI / 4., PI / 4.], 1.),
+                    (vec![1., 3. * PI / 4., PI / 4.], 0.),
+                    (vec![1., 5. * PI / 4., PI / 4.], 1.),
+                    (vec![1., 7. * PI / 4., PI / 4.], 0.),
+                    (vec![1., PI / 4., 3. * PI / 4.], 1.),
+                    (vec![1., 3. * PI / 4., 3. * PI / 4.], 0.),
+                    (vec![1., 5. * PI / 4., 3. * PI / 4.], 1.),
+                    (vec![1., 7. * PI / 4., 3. * PI / 4.], 0.),
                 ]
             }
         }

@@ -440,7 +440,6 @@ impl Individual {
             .iter()
             .map(|(point, label)| {
                 let output = self.evaluate(point);
-                let label = if *label { 1. } else { 0. };
                 (output[0] - label).abs()
             })
             .sum::<f64>();
@@ -707,8 +706,9 @@ impl NeuroevolutionAlgorithm for Neat {
         unimplemented!()
     }
 
-    fn evaluate(&self, _input: &Vec<f64>) -> bool {
-        unimplemented!()
+    fn evaluate(&self, _input: &Vec<f64>) -> f64 {
+        let best_individual = self.get_best_individual();
+        best_individual.evaluate(_input)[0]
     }
 }
 

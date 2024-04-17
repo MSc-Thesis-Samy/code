@@ -64,6 +64,27 @@ impl DiscreteVNeuron {
     pub fn get_bend(&self) -> f64 {
         self.bend as f64 / self.resolution as f64 * PI
     }
+
+    fn evaluate_core(&self, input: &Vec<f64>) -> bool {
+        let mut normal = vec![0.; self.dim];
+        let bias = self.get_bias();
+        normal[0] = 1.;
+        for i in 1..self.dim {
+            normal[i] = self.get_angle(i-1);
+        }
+
+        let dot_product = polar_dot_product(input, &normal) - bias.abs();
+        let norm = (polar_dot_product(input, input) + bias * bias - 2. * bias.abs() * polar_dot_product(input, &normal)).sqrt();
+        let cos_angle = dot_product / norm;
+        let angle = cos_angle.acos();
+
+        if bias >= 0. {
+            angle <= self.get_bend()
+        }
+        else {
+            PI - angle <= self.get_bend()
+        }
+    }
 }
 
 impl NeuroevolutionAlgorithm for DiscreteVNeuron {
@@ -91,24 +112,12 @@ impl NeuroevolutionAlgorithm for DiscreteVNeuron {
         unimplemented!()
     }
 
-    fn evaluate(&self, input: &Vec<f64>) -> bool {
-        let mut normal = vec![0.; self.dim];
-        let bias = self.get_bias();
-        normal[0] = 1.;
-        for i in 1..self.dim {
-            normal[i] = self.get_angle(i-1);
-        }
-
-        let dot_product = polar_dot_product(input, &normal) - bias.abs();
-        let norm = (polar_dot_product(input, input) + bias * bias - 2. * bias.abs() * polar_dot_product(input, &normal)).sqrt();
-        let cos_angle = dot_product / norm;
-        let angle = cos_angle.acos();
-
-        if bias >= 0. {
-            angle <= self.get_bend()
-        }
-        else {
-            PI - angle <= self.get_bend()
+    fn evaluate(&self, input: &Vec<f64>) -> f64 {
+        if self.evaluate_core(input) {
+            1.
+        } else {
+            0.
         }
     }
+
 }

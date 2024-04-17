@@ -74,6 +74,24 @@ impl DiscreteNetwork {
     pub fn get_angles(&self) -> Vec<Vec<f64>> {
         self.angles.iter().map(|row| row.iter().map(|&x| x as f64 / self.resolution as f64 * 2. * PI).collect()).collect()
     }
+
+    fn evaluate_core(&self, input: &Vec<f64>) -> bool {
+        let mut hidden = vec![false; self.n_neurons];
+        for i in 0..self.n_neurons {
+            let mut normal = vec![0.;self.dim];
+            normal[0] = 1.;
+            for j in 1..self.dim {
+                normal[j] = self.get_angle(i, j-1);
+            }
+            if 2. * self.biases[i] as f64 / self.resolution as f64 - 1. >= 0. {
+                hidden[i] = polar_dot_product(input, &normal) - self.get_bias(i).abs() >= 0.;
+            }
+            else {
+                hidden[i] = polar_dot_product(input, &normal) - self.get_bias(i).abs() < 0.;
+            }
+        }
+        (self.output_layer)(&hidden)
+    }
 }
 
 impl NeuroevolutionAlgorithm for DiscreteNetwork {
@@ -96,21 +114,11 @@ impl NeuroevolutionAlgorithm for DiscreteNetwork {
         unimplemented!()
     }
 
-    fn evaluate(&self, input: &Vec<f64>) -> bool {
-        let mut hidden = vec![false; self.n_neurons];
-        for i in 0..self.n_neurons {
-            let mut normal = vec![0.;self.dim];
-            normal[0] = 1.;
-            for j in 1..self.dim {
-                normal[j] = self.get_angle(i, j-1);
-            }
-            if 2. * self.biases[i] as f64 / self.resolution as f64 - 1. >= 0. {
-                hidden[i] = polar_dot_product(input, &normal) - self.get_bias(i).abs() >= 0.;
-            }
-            else {
-                hidden[i] = polar_dot_product(input, &normal) - self.get_bias(i).abs() < 0.;
-            }
+    fn evaluate(&self, input: &Vec<f64>) -> f64 {
+        if self.evaluate_core(input) {
+            1.
+        } else {
+            0.
         }
-        (self.output_layer)(&hidden)
     }
 }

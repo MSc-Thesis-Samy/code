@@ -1,7 +1,6 @@
 use std::f64::consts::PI;
 use ggez::*;
 use crate::neuroevolution_algorithm::*;
-use crate::neat::*;
 use crate::benchmarks::{ClassificationProblem, ClassificationProblemEval};
 
 pub struct State {
@@ -132,12 +131,13 @@ impl State {
         match self.problem {
             ClassificationProblem::Xor => {
                 for (point, label) in &self.problem.get_points() {
+                    let label = *label == 1.;
                     let (x, y) = (point[0], point[1]);
                     let point = self.cartesian_to_canvas((x, y));
                     mesh.rectangle(
                         graphics::DrawMode::fill(),
                         graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
-                        if *label { graphics::Color::GREEN } else { graphics::Color::RED },
+                        if label { graphics::Color::GREEN } else { graphics::Color::RED },
                     )?;
                 }
             }
@@ -152,11 +152,12 @@ impl State {
                 )?;
 
                 for (point, label) in &self.problem.get_points() {
+                    let label = *label == 1.;
                     let point = self.polar_to_canvas(point);
                     mesh.rectangle(
                         graphics::DrawMode::fill(),
                         graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
-                        if *label { graphics::Color::GREEN } else { graphics::Color::RED },
+                        if label { graphics::Color::GREEN } else { graphics::Color::RED },
                     )?;
                 }
             }
@@ -204,13 +205,12 @@ impl State {
 
             // for now, draw outputs
             Algorithm::Neat(neat) => {
-                let best_individual = neat.get_best_individual();
                 for (point, _) in &self.problem.get_points() {
-                    let output = best_individual.evaluate(point);
+                    let output = neat.evaluate(point);
                     // gradient from red to green
                     let color = graphics::Color::new(
-                        1.0 - output[0] as f32,
-                        output[0] as f32,
+                        1.0 - output as f32,
+                        output as f32,
                         0.0,
                         1.0,
                     );

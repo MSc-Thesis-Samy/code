@@ -13,7 +13,7 @@ pub trait NeuroevolutionAlgorithm {
         }
     }
     fn optimize_cmaes(&mut self, problem: &ClassificationProblem);
-    fn evaluate(&self, input: &Vec<f64>) -> bool;
+    fn evaluate(&self, input: &Vec<f64>) -> f64;
 }
 
 pub enum Algorithm {
@@ -57,7 +57,7 @@ impl NeuroevolutionAlgorithm for Algorithm {
         }
     }
 
-    fn evaluate(&self, input: &Vec<f64>) -> bool {
+    fn evaluate(&self, input: &Vec<f64>) -> f64 {
         match self {
             Algorithm::DiscreteOneplusoneNA(network) => network.evaluate(input),
             Algorithm::ContinuousOneplusoneNA(network) => network.evaluate(input),
