@@ -21,6 +21,43 @@ pub enum ClassificationProblem {
     Xor,
 }
 
+#[derive(Debug)]
+pub enum Benchmark {
+    PoleBalancing,
+    Classification(ClassificationProblem),
+}
+
+pub trait ClassificationProblemEval {
+    fn get_points(&self) -> LabeledPoints;
+    fn evaluate(&self, alg: &Algorithm) -> f64 {
+        match alg {
+            Algorithm::Neat(neat) => {
+                neat.get_best_individual_fitness()
+            }
+            _ => {
+                let points = self.get_points();
+                let distances_sum = points
+                    .iter()
+                    .map(|(point, label)| {
+                        let output = alg.evaluate(point);
+                        (output - *label).abs()
+                    })
+                    .sum::<f64>();
+                (points.len() as f64 - distances_sum) / points.len() as f64
+            }
+        }
+    }
+}
+
+impl Benchmark {
+    pub fn evaluate(&self, alg: &Algorithm) -> f64 {
+        match self {
+            Benchmark::PoleBalancing => pole_balancing(alg),
+            Benchmark::Classification(problem) => problem.evaluate(alg),
+        }
+    }
+}
+
 fn pole_balancing(alg: &Algorithm) -> f64 {
     let mut state = State::new(
         0.,
@@ -47,28 +84,6 @@ fn pole_balancing(alg: &Algorithm) -> f64 {
     }
 
     count as f64 / POLE_BALANCING_STEPS as f64
-}
-
-pub trait ClassificationProblemEval {
-    fn get_points(&self) -> LabeledPoints;
-    fn evaluate(&self, alg: &Algorithm) -> f64 {
-        match alg {
-            Algorithm::Neat(neat) => {
-                neat.get_best_individual_fitness()
-            }
-            _ => {
-                let points = self.get_points();
-                let distances_sum = points
-                    .iter()
-                    .map(|(point, label)| {
-                        let output = alg.evaluate(point);
-                        (output - *label).abs()
-                    })
-                    .sum::<f64>();
-                (points.len() as f64 - distances_sum) / points.len() as f64
-            }
-        }
-    }
 }
 
 impl ClassificationProblemEval for ClassificationProblem {

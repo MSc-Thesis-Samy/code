@@ -1,5 +1,5 @@
 use neuroevolution::neat::*;
-use neuroevolution::benchmarks::ClassificationProblem;
+use neuroevolution::benchmarks::{Benchmark, ClassificationProblem};
 use neuroevolution::neuroevolution_algorithm::*;
 
 fn main() {
@@ -25,6 +25,6 @@ fn main() {
     };
 
     let mut neat = Neat::new(config);
-    neat.optimize(&ClassificationProblem::Xor, 1500);
+    neat.optimize(&Benchmark::Classification(ClassificationProblem::Xor), 1500);
     println!("Fitness: {:.2}", neat.get_best_individual_fitness());
 }

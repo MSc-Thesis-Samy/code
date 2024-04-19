@@ -1,10 +1,9 @@
 use std::fmt;
 use std::f64::consts::PI;
 use rand::prelude::*;
-use crate::benchmarks::ClassificationProblemEval;
 use crate::utils::*;
 use crate::neuroevolution_algorithm::*;
-use crate::benchmarks::ClassificationProblem;
+use crate::benchmarks::Benchmark;
 
 #[derive(Debug, Clone)]
 pub struct DiscreteNetwork {
@@ -95,7 +94,7 @@ impl DiscreteNetwork {
 }
 
 impl NeuroevolutionAlgorithm for DiscreteNetwork {
-    fn optimization_step(&mut self, problem: &ClassificationProblem) {
+    fn optimization_step(&mut self, problem: &Benchmark) {
         let mut new_network = self.clone();
         for i in 0..self.n_neurons {
             new_network.biases[i] = DiscreteNetwork::mutate_component(self.biases[i], self.resolution + 1);
@@ -110,7 +109,7 @@ impl NeuroevolutionAlgorithm for DiscreteNetwork {
     }
 
     #[allow(unused_variables)]
-    fn optimize_cmaes(&mut self, problem: &ClassificationProblem) {
+    fn optimize_cmaes(&mut self, problem: &Benchmark) {
         unimplemented!()
     }
 

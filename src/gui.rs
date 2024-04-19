@@ -1,17 +1,17 @@
 use std::f64::consts::PI;
 use ggez::*;
 use crate::neuroevolution_algorithm::*;
-use crate::benchmarks::{ClassificationProblem, ClassificationProblemEval};
+use crate::benchmarks::{Benchmark, ClassificationProblem, ClassificationProblemEval};
 
 pub struct State {
     alg: Algorithm,
-    problem: ClassificationProblem,
+    problem: Benchmark,
     n_iters: u32,
     iteration: u32,
 }
 
 impl State {
-    pub fn new(alg: Algorithm, problem: ClassificationProblem, n_iters: u32) -> Self {
+    pub fn new(alg: Algorithm, problem: Benchmark, n_iters: u32) -> Self {
         State {
             alg,
             problem,
@@ -128,39 +128,45 @@ impl State {
     }
 
     fn get_problem_points_mesh(&self, mesh: &mut graphics::MeshBuilder) -> GameResult {
-        match self.problem {
-            ClassificationProblem::Xor => {
-                for (point, label) in &self.problem.get_points() {
-                    let label = *label == 1.;
-                    let (x, y) = (point[0], point[1]);
-                    let point = self.cartesian_to_canvas((x, y));
-                    mesh.rectangle(
-                        graphics::DrawMode::fill(),
-                        graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
-                        if label { graphics::Color::GREEN } else { graphics::Color::RED },
-                    )?;
-                }
-            }
-            _ => {
-                // background circle for sphere classification problems
-                mesh.circle(
-                    graphics::DrawMode::stroke(2.0),
-                    mint::Point2{x: 400.0, y: 300.0},
-                    250.0,
-                    0.1,
-                    graphics::Color::BLACK,
-                )?;
+        match &self.problem {
+            Benchmark::Classification(problem) => {
+                match problem {
+                    ClassificationProblem::Xor => {
+                        for (point, label) in problem.get_points() {
+                            let label = label == 1.;
+                            let (x, y) = (point[0], point[1]);
+                            let point = self.cartesian_to_canvas((x, y));
+                            mesh.rectangle(
+                                graphics::DrawMode::fill(),
+                                graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
+                                if label { graphics::Color::GREEN } else { graphics::Color::RED },
+                            )?;
+                        }
+                    }
+                    _ => {
+                        // background circle for sphere classification problems
+                        mesh.circle(
+                            graphics::DrawMode::stroke(2.0),
+                            mint::Point2{x: 400.0, y: 300.0},
+                            250.0,
+                            0.1,
+                            graphics::Color::BLACK,
+                        )?;
 
-                for (point, label) in &self.problem.get_points() {
-                    let label = *label == 1.;
-                    let point = self.polar_to_canvas(point);
-                    mesh.rectangle(
-                        graphics::DrawMode::fill(),
-                        graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
-                        if label { graphics::Color::GREEN } else { graphics::Color::RED },
-                    )?;
+                        for (point, label) in problem.get_points() {
+                            let label = label == 1.;
+                            let point = self.polar_to_canvas(&point);
+                            mesh.rectangle(
+                                graphics::DrawMode::fill(),
+                                graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
+                                if label { graphics::Color::GREEN } else { graphics::Color::RED },
+                            )?;
+                        }
+                    }
                 }
             }
+
+            Benchmark::PoleBalancing => ()
         }
 
         Ok(())
@@ -203,25 +209,31 @@ impl State {
                 self.get_bend_decision_mesh(mesh, bias, angle, 0.1, 1., bend)?;
             }
 
-            // for now, draw outputs
             Algorithm::Neat(neat) => {
-                for (point, _) in &self.problem.get_points() {
-                    let output = neat.evaluate(point);
-                    // gradient from red to green
-                    let color = graphics::Color::new(
-                        1.0 - output as f32,
-                        output as f32,
-                        0.0,
-                        1.0,
-                    );
-                    let point = self.cartesian_to_canvas((point[0], point[1]));
-                    mesh.circle(
-                        graphics::DrawMode::stroke(8.0),
-                        point,
-                        20.0,
-                        0.1,
-                        color,
-                    )?;
+                match &self.problem {
+                    Benchmark::Classification(problem) => {
+                    // for now, draw outputs
+                        for (point, _) in problem.get_points() {
+                            let output = neat.evaluate(&point);
+                            // gradient from red to green
+                            let color = graphics::Color::new(
+                                1.0 - output as f32,
+                                output as f32,
+                                0.0,
+                                1.0,
+                            );
+                            let point = self.cartesian_to_canvas((point[0], point[1]));
+                            mesh.circle(
+                                graphics::DrawMode::stroke(8.0),
+                                point,
+                                20.0,
+                                0.1,
+                                color,
+                            )?;
+                        }
+                    }
+
+                    Benchmark::PoleBalancing => ()
                 }
             }
 

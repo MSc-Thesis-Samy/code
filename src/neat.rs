@@ -1,9 +1,8 @@
 use rand::prelude::*;
 use rand_distr::Normal;
-use crate::benchmarks::ClassificationProblemEval;
 use crate::neural_network::*;
 use crate::neuroevolution_algorithm::*;
-use crate::benchmarks::ClassificationProblem;
+use crate::benchmarks::Benchmark;
 
 type Population = Vec<Individual>;
 
@@ -434,17 +433,17 @@ impl Individual {
         network.feed_forward(input)
     }
 
-    fn update_fitness(&mut self, problem: &ClassificationProblem) {
+    fn update_fitness(&mut self, problem: &Benchmark) {
         self.fitness = problem.evaluate(&Algorithm::NeatIndividual(self.clone()));
     }
 }
 
 impl NeuroevolutionAlgorithm for Individual {
-    fn optimization_step(&mut self, _problem: &ClassificationProblem) {
+    fn optimization_step(&mut self, _problem: &Benchmark) {
         unimplemented!()
     }
 
-    fn optimize_cmaes(&mut self, _problem: &ClassificationProblem) {
+    fn optimize_cmaes(&mut self, _problem: &Benchmark) {
         unimplemented!()
     }
 
@@ -501,7 +500,7 @@ impl Neat {
         }
     }
 
-    pub fn initialize(&mut self, problem: &ClassificationProblem) {
+    pub fn initialize(&mut self, problem: &Benchmark) {
         let weights_distribution = Normal::new(self.config.weights_mean, self.config.weights_stddev).unwrap();
         let n_inputs = self.config.n_inputs;
         let n_outputs = self.config.n_outputs;
@@ -600,7 +599,7 @@ impl Neat {
         }
     }
 
-    fn update_fitnesses(&mut self, problem: &ClassificationProblem) {
+    fn update_fitnesses(&mut self, problem: &Benchmark) {
         for species in self.species.iter_mut() {
             for individual in species.members.iter_mut() {
                 individual.update_fitness(problem);
@@ -629,7 +628,7 @@ impl Neat {
         self.species.retain(|species| self.history.generation - species.latest_improvement < self.config.stagnation_threshold);
     }
 
-    fn next_generation(&mut self, problem: &ClassificationProblem) {
+    fn next_generation(&mut self, problem: &Benchmark) {
         self.remove_stagnated_species();
 
         self.history.generation += 1;
@@ -698,7 +697,7 @@ impl Neat {
 }
 
 impl NeuroevolutionAlgorithm for Neat {
-    fn optimization_step(&mut self, problem: &ClassificationProblem) {
+    fn optimization_step(&mut self, problem: &Benchmark) {
         if self.history.generation == 0 {
             self.initialize(problem);
         }
@@ -706,7 +705,7 @@ impl NeuroevolutionAlgorithm for Neat {
         self.next_generation(problem);
     }
 
-    fn optimize_cmaes(&mut self, _problem: &ClassificationProblem) {
+    fn optimize_cmaes(&mut self, _problem: &Benchmark) {
         unimplemented!()
     }
 
@@ -718,6 +717,7 @@ impl NeuroevolutionAlgorithm for Neat {
 
 #[cfg(test)]
 mod tests {
+    use crate::benchmarks::ClassificationProblem;
     use super::*;
 
     const config: Config = Config {
@@ -741,7 +741,7 @@ mod tests {
         stagnation_threshold: 15,
     };
 
-    const problem: ClassificationProblem = ClassificationProblem::Xor;
+    const problem: Benchmark = Benchmark::Classification(ClassificationProblem::Xor);
 
     #[test]
     fn test_crossover() {

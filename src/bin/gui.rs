@@ -12,7 +12,7 @@ fn main() {
     let vneuron = DiscreteVNeuron::new(RESOLUTION, 2);
     let alg = Algorithm::DiscreteBNA(vneuron);
 
-    let quarter = ClassificationProblem::SphereProblem(SphereClassificationProblem::Quarter(UNIT_CIRCLE_STEPS));
+    let quarter = Benchmark::Classification(ClassificationProblem::SphereProblem(SphereClassificationProblem::Quarter(UNIT_CIRCLE_STEPS)));
 
     let state = State::new(alg, quarter, N_ITERATIONS);
 
