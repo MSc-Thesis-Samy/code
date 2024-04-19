@@ -108,7 +108,7 @@ impl ClassificationProblemEval for SphereClassificationProblem {
                 (0..*n)
                     .map(|i| {
                         let angle = 2. * PI * i as f64 / *n as f64;
-                        (vec![1., angle], if angle <= PI / 2. || angle >= 3. * PI / 2. { 1. } else { 0. })
+                        (vec![1., angle], if angle <= PI / 2. || (angle >= PI && angle <= 3. * PI / 2.) { 1. } else { 0. })
                     })
                     .collect::<LabeledPoints>()
             }

@@ -435,16 +435,6 @@ impl Individual {
     }
 
     fn update_fitness(&mut self, problem: &ClassificationProblem) {
-        // let points = problem.get_points();
-        // let distances_sum = points
-        //     .iter()
-        //     .map(|(point, label)| {
-        //         let output = self.evaluate_core(point);
-        //         (output[0] - label).abs()
-        //     })
-        //     .sum::<f64>();
-        //
-        // self.fitness = points.len() as f64 - distances_sum;
         self.fitness = problem.evaluate(&Algorithm::NeatIndividual(self.clone()));
     }
 }

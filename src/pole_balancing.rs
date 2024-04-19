@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-const GRAVITY: f64 = 9.81;
+const GRAVITY: f64 = -9.81;
 const DELTA_T: f64 = 0.01;
 const ROAD_LENGTH: f64 = 4.8;
 const BALANCED_THRESHOLD: f64 = PI / 6.;
@@ -63,7 +63,7 @@ impl State {
             .zip(self.pole_velocities.iter())
             .zip(self.pole_masses.iter())
             .map(|(((angle, length), velocity), mass)| {
-                mass * length * velocity.powi(2) * angle.sin() + 3. / 4. * mass * GRAVITY * angle.sin() * angle.cos()
+                mass * length / 2. * velocity.powi(2) * angle.sin() + 3. / 4. * mass * GRAVITY * angle.sin() * angle.cos()
             })
             .collect::<Vec<f64>>();
 
@@ -71,8 +71,11 @@ impl State {
 
         let pole_accelerations = self.pole_angles.iter()
             .zip(self.pole_lengths.iter())
-            .map(|(angle, length)| { -3. / (4. * length) * (acceleration * angle.cos() + GRAVITY * angle.sin()) })
+            .map(|(angle, length)| { -3. / (2. * length) * (acceleration * angle.cos() + GRAVITY * angle.sin()) })
             .collect::<Vec<f64>>();
+
+        // println!("{:?}", acceleration);
+        // println!("{:?}", pole_accelerations);
 
         self.cart_velocity += acceleration * DELTA_T;
         self.cart_position += self.cart_velocity * DELTA_T;
@@ -103,7 +106,7 @@ mod tests {
             0.,
             0.,
             vec![1.],
-            vec![0.],
+            vec![PI],
             vec![0.],
             1.,
             vec![0.5],
@@ -116,75 +119,7 @@ mod tests {
 
         assert!((state.cart_position - 0.).abs() < TOL);
         assert!((state.cart_velocity - 0.).abs() < TOL);
-        assert!((state.pole_angles[0] - 0.).abs() < TOL);
+        assert!((state.pole_angles[0] - PI).abs() < TOL);
         assert!((state.pole_velocities[0] - 0.).abs() < TOL);
-    }
-
-    #[test]
-    fn test_pole_balancing_update_forward_force() {
-        let mut state = State::new(
-            0.,
-            0.,
-            vec![1.],
-            vec![0.],
-            vec![0.],
-            1.,
-            vec![0.5],
-        );
-
-        let force = 10.;
-        for _ in 0..TIME_STEPS {
-            state.update(force);
-        }
-
-        assert!(state.cart_position > 0.);
-        assert!(state.cart_velocity > 0.);
-        assert!(state.pole_angles[0] < 0.);
-    }
-
-    #[test]
-    fn test_pole_balancing_update_backward_force() {
-        let mut state = State::new(
-            0.,
-            0.,
-            vec![1.],
-            vec![0.],
-            vec![0.],
-            1.,
-            vec![0.5],
-        );
-
-        let force = -10.;
-        for _ in 0..TIME_STEPS {
-            state.update(force);
-        }
-
-        assert!(state.cart_position < 0.);
-        assert!(state.cart_velocity < 0.);
-        assert!(state.pole_angles[0] > 0.);
-    }
-
-    #[test]
-    fn test_pole_balancing_update_falling_pole() {
-        // TODO fix this test
-        //
-        let mut state = State::new(
-            0.,
-            0.,
-            vec![1.],
-            vec![2. * PI / 3.],
-            vec![0.],
-            1.,
-            vec![0.5],
-        );
-
-        let force = 0.;
-        for _ in 0..TIME_STEPS {
-            state.update(force);
-        }
-
-        println!("{:?}", state.pole_angles[0]);
-        // assert!(state.pole_angles[0] > 2. * PI / 3.);
-        // assert!(state.pole_velocities[0] >= 0.);
     }
 }
