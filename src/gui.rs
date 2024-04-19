@@ -224,6 +224,8 @@ impl State {
                     )?;
                 }
             }
+
+            Algorithm::NeatIndividual(_) => ()
         }
 
         Ok(())

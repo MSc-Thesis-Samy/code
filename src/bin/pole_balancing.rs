@@ -6,7 +6,7 @@ fn main() {
         0.,
         0.,
         vec![1.],
-        vec![0.],
+        vec![1. * PI / 3.],
         vec![0.],
         1.,
         vec![0.5],
@@ -14,7 +14,7 @@ fn main() {
 
     let force = 0.;
     println!("{:?}", state);
-    for _ in 0..100 {
+    for _ in 0..1000000 {
         state.update(force);
     }
     println!("{:?}", state);

@@ -429,22 +429,37 @@ impl Individual {
         weighted_sum
     }
 
-    pub fn evaluate(&self, input: &Vec<f64>) -> Vec<f64> {
+    pub fn evaluate_core(&self, input: &Vec<f64>) -> Vec<f64> {
         let network = self.to_neural_network();
         network.feed_forward(input)
     }
 
     fn update_fitness(&mut self, problem: &ClassificationProblem) {
-        let points = problem.get_points();
-        let distances_sum = points
-            .iter()
-            .map(|(point, label)| {
-                let output = self.evaluate(point);
-                (output[0] - label).abs()
-            })
-            .sum::<f64>();
+        // let points = problem.get_points();
+        // let distances_sum = points
+        //     .iter()
+        //     .map(|(point, label)| {
+        //         let output = self.evaluate_core(point);
+        //         (output[0] - label).abs()
+        //     })
+        //     .sum::<f64>();
+        //
+        // self.fitness = points.len() as f64 - distances_sum;
+        self.fitness = problem.evaluate(&Algorithm::NeatIndividual(self.clone()));
+    }
+}
 
-        self.fitness = points.len() as f64 - distances_sum;
+impl NeuroevolutionAlgorithm for Individual {
+    fn optimization_step(&mut self, _problem: &ClassificationProblem) {
+        unimplemented!()
+    }
+
+    fn optimize_cmaes(&mut self, _problem: &ClassificationProblem) {
+        unimplemented!()
+    }
+
+    fn evaluate(&self, _input: &Vec<f64>) -> f64 {
+        self.evaluate_core(_input)[0]
     }
 }
 
@@ -675,7 +690,6 @@ impl Neat {
         }
 
         self.update_species(new_population);
-        // println!("Number of species: {}", self.species.len());
         self.update_fitnesses(problem);
     }
 
@@ -706,9 +720,9 @@ impl NeuroevolutionAlgorithm for Neat {
         unimplemented!()
     }
 
-    fn evaluate(&self, _input: &Vec<f64>) -> f64 {
+    fn evaluate(&self, input: &Vec<f64>) -> f64 {
         let best_individual = self.get_best_individual();
-        best_individual.evaluate(_input)[0]
+        best_individual.evaluate(input)
     }
 }
 

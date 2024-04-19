@@ -1,5 +1,7 @@
 use std::f64::consts::PI;
+use crate::constants::POLE_BALANCING_STEPS;
 use crate::neuroevolution_algorithm::*;
+use crate::pole_balancing::State;
 
 pub type LabeledPoint = (Vec<f64>, f64);
 pub type LabeledPoints = Vec<LabeledPoint>;
@@ -19,6 +21,34 @@ pub enum ClassificationProblem {
     Xor,
 }
 
+fn pole_balancing(alg: &Algorithm) -> f64 {
+    let mut state = State::new(
+        0.,
+        0.,
+        vec![1.],
+        vec![0.],
+        vec![0.],
+        1.,
+        vec![0.5],
+    );
+
+    let mut count = 0;
+
+    for _ in 0..POLE_BALANCING_STEPS {
+        let input = state.to_vec();
+        let output = alg.evaluate(&input);
+        let force = 20. * output - 10.;
+        state.update(force);
+        if state.are_poles_balanced() && !state.is_cart_out_of_bounds() {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+
+    count as f64 / POLE_BALANCING_STEPS as f64
+}
+
 pub trait ClassificationProblemEval {
     fn get_points(&self) -> LabeledPoints;
     fn evaluate(&self, alg: &Algorithm) -> f64 {
@@ -34,7 +64,7 @@ pub trait ClassificationProblemEval {
                         let output = alg.evaluate(point);
                         (output - *label).abs()
                     })
-                    .sum::<f64>() / points.len() as f64;
+                    .sum::<f64>();
                 (points.len() as f64 - distances_sum) / points.len() as f64
             }
         }
