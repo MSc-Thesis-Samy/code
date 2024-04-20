@@ -25,10 +25,6 @@ fn main() {
         Problem::PoleBalancing => Benchmark::PoleBalancing,
     };
 
-    if cli.problem == Problem::PoleBalancing {
-        panic!("Not implemented yet!");
-    }
-
     match cli.algorithm {
         AlgorithmType::Oneplusonena => {
             match cli.continuous {
@@ -83,12 +79,20 @@ fn main() {
 
     match cli.gui {
         true => {
-            let state = State::new(alg, problem, N_ITERATIONS);
-            let mut conf_file = File::open("gui_conf.toml").unwrap();
-            let conf = conf::Conf::from_toml_file(&mut conf_file).unwrap();
-            let cb = ContextBuilder::new("Neuroevolution", "Samy Haffoudhi") .default_conf(conf);
-            let (ctx, event_loop) = cb.build().unwrap();
-            event::run(ctx, event_loop, state);
+            match problem {
+                Benchmark::PoleBalancing => {
+                    panic!("Not implemented yet!");
+                }
+
+                _ => {
+                    let state = State::new(alg, problem, N_ITERATIONS);
+                    let mut conf_file = File::open("gui_conf.toml").unwrap();
+                    let conf = conf::Conf::from_toml_file(&mut conf_file).unwrap();
+                    let cb = ContextBuilder::new("Neuroevolution", "Samy Haffoudhi") .default_conf(conf);
+                    let (ctx, event_loop) = cb.build().unwrap();
+                    event::run(ctx, event_loop, state);
+                }
+            }
         }
         false => {
             alg.optimize(&problem, cli.iterations);

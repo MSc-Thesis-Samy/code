@@ -37,6 +37,18 @@ impl State {
         }
     }
 
+    pub fn default() -> Self {
+        Self::new(
+            0.,
+            0.,
+            vec![1., 0.1],
+            vec![0.017, 0.],
+            vec![0., 0.],
+            1.,
+            vec![0.5, 0.05],
+        )
+    }
+
     pub fn get_cart_position(&self) -> f64 {
         self.cart_position
     }

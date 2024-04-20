@@ -59,15 +59,7 @@ impl Benchmark {
 }
 
 fn pole_balancing(alg: &Algorithm) -> f64 {
-    let mut state = State::new(
-        0.,
-        0.,
-        vec![1., 0.1],
-        vec![0.017, 0.],
-        vec![0., 0.],
-        1.,
-        vec![0.5, 0.05],
-    );
+    let mut state = State::default();
 
     let mut count = 0;
 

@@ -6,15 +6,7 @@ use neuroevolution::benchmarks::Benchmark;
 use neuroevolution::pole_balancing_gui::State;
 
 fn main() {
-    let pole_balancing_state = neuroevolution::pole_balancing::State::new(
-        0.,
-        0.,
-        vec![1., 0.1],
-        vec![0.017, 0.],
-        vec![0., 0.],
-        1.,
-        vec![0.5, 0.05],
-    );
+    let pole_balancing_state = neuroevolution::pole_balancing::State::default();
 
     let config = Config {
         population_size: 1000,
@@ -40,6 +32,7 @@ fn main() {
     let neat = Neat::new(config);
     let mut alg = Algorithm::Neat(neat);
     let problem = Benchmark::PoleBalancing;
+    println!("Optimizing algorithm...");
     alg.optimize(&problem, 20);
     println!("Fitness: {}", problem.evaluate(&alg));
 
