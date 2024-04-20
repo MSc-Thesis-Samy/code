@@ -1,11 +1,11 @@
 use neuroevolution::neat::*;
-use neuroevolution::benchmarks::{Benchmark, ClassificationProblem};
+use neuroevolution::benchmarks::Benchmark;
 use neuroevolution::neuroevolution_algorithm::*;
 
 fn main() {
     let config = Config {
-        population_size: 150,
-        n_inputs: 2,
+        population_size: 1000,
+        n_inputs: 4,
         n_outputs: 1,
         weights_mean: 0.,
         weights_stddev: 0.8,
@@ -19,12 +19,12 @@ fn main() {
         similarity_threshold: 15.0,
         excess_weight: 1.,
         disjoint_weight: 1.,
-        matching_weight: 0.3,
-        champion_copy_threshold: 5,
+        matching_weight: 3.0,
+        champion_copy_threshold: 4,
         stagnation_threshold: 1500,
     };
 
     let mut neat = Neat::new(config);
-    neat.optimize(&Benchmark::Classification(ClassificationProblem::Xor), 1500);
+    neat.optimize(&Benchmark::PoleBalancing, 1000);
     println!("Fitness: {:.2}", neat.get_best_individual_fitness());
 }

@@ -1,5 +1,5 @@
 use std::f64::consts::PI;
-use crate::constants::POLE_BALANCING_STEPS;
+use crate::constants::{POLE_BALANCING_STEPS, POLE_BALANCING_MAX_FORCE};
 use crate::neuroevolution_algorithm::*;
 use crate::pole_balancing::State;
 
@@ -62,11 +62,11 @@ fn pole_balancing(alg: &Algorithm) -> f64 {
     let mut state = State::new(
         0.,
         0.,
-        vec![1.],
-        vec![0.],
-        vec![0.],
+        vec![1., 0.1],
+        vec![0.017, 0.],
+        vec![0., 0.],
         1.,
-        vec![0.5],
+        vec![0.5, 0.05],
     );
 
     let mut count = 0;
@@ -74,7 +74,7 @@ fn pole_balancing(alg: &Algorithm) -> f64 {
     for _ in 0..POLE_BALANCING_STEPS {
         let input = state.to_vec();
         let output = alg.evaluate(&input);
-        let force = 20. * output - 10.;
+        let force = 2. * POLE_BALANCING_MAX_FORCE * output - POLE_BALANCING_MAX_FORCE;
         state.update(force);
         if state.are_poles_balanced() && !state.is_cart_out_of_bounds() {
             count += 1;

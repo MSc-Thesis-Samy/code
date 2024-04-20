@@ -36,4 +36,5 @@ pub enum Problem {
     Quarter,
     TwoQuarters,
     Xor,
+    PoleBalancing,
 }

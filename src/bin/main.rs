@@ -22,7 +22,12 @@ fn main() {
         Problem::Quarter => Benchmark::Classification(ClassificationProblem::SphereProblem(SphereClassificationProblem::Quarter(UNIT_CIRCLE_STEPS))),
         Problem::TwoQuarters => Benchmark::Classification(ClassificationProblem::SphereProblem(SphereClassificationProblem::TwoQuarters(UNIT_CIRCLE_STEPS))),
         Problem::Xor => Benchmark::Classification(ClassificationProblem::Xor),
+        Problem::PoleBalancing => Benchmark::PoleBalancing,
     };
+
+    if cli.problem == Problem::PoleBalancing {
+        panic!("Not implemented yet!");
+    }
 
     match cli.algorithm {
         AlgorithmType::Oneplusonena => {
