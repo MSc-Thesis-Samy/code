@@ -1,8 +1,8 @@
 use std::f64::consts::PI;
+use crate::constants::ROAD_LENGTH;
 
 const GRAVITY: f64 = -9.81;
 const DELTA_T: f64 = 0.01;
-const ROAD_LENGTH: f64 = 4.8;
 const BALANCED_THRESHOLD: f64 = PI / 6.;
 
 #[derive(Debug)]
@@ -35,6 +35,18 @@ impl State {
             pole_masses,
             cart_mass,
         }
+    }
+
+    pub fn get_cart_position(&self) -> f64 {
+        self.cart_position
+    }
+
+    pub fn get_pole_angles(&self) -> Vec<f64> {
+        self.pole_angles.clone()
+    }
+
+    pub fn get_pole_lengths(&self) -> Vec<f64> {
+        self.pole_lengths.clone()
     }
 
     pub fn to_vec(&self) -> Vec<f64> {
@@ -73,9 +85,6 @@ impl State {
             .zip(self.pole_lengths.iter())
             .map(|(angle, length)| { -3. / (2. * length) * (acceleration * angle.cos() + GRAVITY * angle.sin()) })
             .collect::<Vec<f64>>();
-
-        // println!("{:?}", acceleration);
-        // println!("{:?}", pole_accelerations);
 
         self.cart_velocity += acceleration * DELTA_T;
         self.cart_position += self.cart_velocity * DELTA_T;

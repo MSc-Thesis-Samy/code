@@ -11,3 +11,4 @@ pub mod gui;
 pub mod neat;
 pub mod neural_network;
 pub mod pole_balancing;
+pub mod pole_balancing_gui;
