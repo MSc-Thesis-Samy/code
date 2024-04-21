@@ -32,7 +32,7 @@ fn main() {
     let neat = Neat::new(config);
     let mut alg = Algorithm::Neat(neat);
     let problem = Benchmark::PoleBalancing;
-    println!("Optimizing algorithm...");
+    println!("Evolving algorithm...");
     alg.optimize(&problem, 20);
     println!("Fitness: {}", problem.evaluate(&alg));
 

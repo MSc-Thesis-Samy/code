@@ -1,5 +1,6 @@
 use rand::prelude::*;
 use rand_distr::Normal;
+use serde_derive::Deserialize;
 use crate::neural_network::*;
 use crate::neuroevolution_algorithm::*;
 use crate::benchmarks::Benchmark;
@@ -57,7 +58,7 @@ struct History {
     generation: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Config {
     pub population_size: u32,
     pub n_inputs: u32,
