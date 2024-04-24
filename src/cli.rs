@@ -1,5 +1,6 @@
 use clap::{Parser, ValueEnum};
 use crate::constants::*;
+use crate::benchmarks::Problem;
 
 #[derive(Parser)]
 #[command(about = "Neuroevolution framework", long_about = None)]
@@ -30,11 +31,3 @@ pub enum AlgorithmType {
     Neat,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum Problem {
-    Half,
-    Quarter,
-    TwoQuarters,
-    Xor,
-    PoleBalancing,
-}

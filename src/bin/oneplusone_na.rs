@@ -5,11 +5,11 @@ use neuroevolution::neuroevolution_algorithm::*;
 use neuroevolution::constants::*;
 
 fn main() {
-    let half = Benchmark::Classification(ClassificationProblem::SphereProblem(SphereClassificationProblem::Half(UNIT_CIRCLE_STEPS)));
-    let quarter = Benchmark::Classification(ClassificationProblem::SphereProblem(SphereClassificationProblem::Quarter(UNIT_CIRCLE_STEPS)));
-    let two_quarters = Benchmark::Classification(ClassificationProblem::SphereProblem(SphereClassificationProblem::TwoQuarters(UNIT_CIRCLE_STEPS)));
-    let square = Benchmark::Classification(ClassificationProblem::SphereProblem(SphereClassificationProblem::Square));
-    let cube = Benchmark::Classification(ClassificationProblem::SphereProblem(SphereClassificationProblem::Cube));
+    let half = Benchmark::new(Problem::Half);
+    let quarter = Benchmark::new(Problem::Quarter);
+    let two_quarters = Benchmark::new(Problem::TwoQuarters);
+    let square = Benchmark::new(Problem::Square);
+    let cube = Benchmark::new(Problem::Cube);
 
     let network = Network::new(2, 2);
     let mut alg = Algorithm::ContinuousOneplusoneNA(network);

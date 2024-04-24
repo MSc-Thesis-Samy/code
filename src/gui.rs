@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 use ggez::*;
 use crate::neuroevolution_algorithm::*;
-use crate::benchmarks::{Benchmark, ClassificationProblem, ClassificationProblemEval};
+use crate::benchmarks::Benchmark;
 
 pub struct State {
     alg: Algorithm,
@@ -129,43 +129,38 @@ impl State {
 
     fn get_problem_points_mesh(&self, mesh: &mut graphics::MeshBuilder) -> GameResult {
         match &self.problem {
-            Benchmark::Classification(problem) => {
-                match problem {
-                    ClassificationProblem::Xor => {
-                        for (point, label) in problem.get_points() {
-                            let label = label == 1.;
-                            let (x, y) = (point[0], point[1]);
-                            let point = self.cartesian_to_canvas((x, y));
-                            mesh.rectangle(
-                                graphics::DrawMode::fill(),
-                                graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
-                                if label { graphics::Color::GREEN } else { graphics::Color::RED },
-                            )?;
-                        }
-                    }
-                    _ => {
-                        // background circle for sphere classification problems
-                        mesh.circle(
-                            graphics::DrawMode::stroke(2.0),
-                            mint::Point2{x: 400.0, y: 300.0},
-                            250.0,
-                            0.1,
-                            graphics::Color::BLACK,
-                        )?;
+            Benchmark::Classification(points) => {
+                for (point, label) in points {
+                    let label = *label == 1.;
+                    let (x, y) = (point[0], point[1]);
+                    let point = self.cartesian_to_canvas((x, y));
+                    mesh.rectangle(
+                        graphics::DrawMode::fill(),
+                        graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
+                        if label { graphics::Color::GREEN } else { graphics::Color::RED },
+                    )?;
+                }
+            },
+            Benchmark::SphereClassification(points) => {
+                // background circle for sphere classification problems
+                mesh.circle(
+                    graphics::DrawMode::stroke(2.0),
+                    mint::Point2{x: 400.0, y: 300.0},
+                    250.0,
+                    0.1,
+                    graphics::Color::BLACK,
+                )?;
 
-                        for (point, label) in problem.get_points() {
-                            let label = label == 1.;
-                            let point = self.polar_to_canvas(&point);
-                            mesh.rectangle(
-                                graphics::DrawMode::fill(),
-                                graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
-                                if label { graphics::Color::GREEN } else { graphics::Color::RED },
-                            )?;
-                        }
-                    }
+                for (point, label) in points {
+                    let label = *label == 1.;
+                    let point = self.polar_to_canvas(&point);
+                    mesh.rectangle(
+                        graphics::DrawMode::fill(),
+                        graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
+                        if label { graphics::Color::GREEN } else { graphics::Color::RED },
+                    )?;
                 }
             }
-
             Benchmark::PoleBalancing => ()
         }
 
@@ -211,9 +206,9 @@ impl State {
 
             Algorithm::Neat(neat) => {
                 match &self.problem {
-                    Benchmark::Classification(problem) => {
+                    Benchmark::Classification(points) | Benchmark::SphereClassification(points) => {
                     // for now, draw outputs
-                        for (point, _) in problem.get_points() {
+                        for (point, _) in points {
                             let output = neat.evaluate(&point);
                             // gradient from red to green
                             let color = graphics::Color::new(

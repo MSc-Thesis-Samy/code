@@ -718,10 +718,10 @@ impl NeuroevolutionAlgorithm for Neat {
 
 #[cfg(test)]
 mod tests {
-    use crate::benchmarks::ClassificationProblem;
+    use crate::benchmarks::{Benchmark, Problem};
     use super::*;
 
-    const config: Config = Config {
+    const CONFIG: Config = Config {
         population_size: 10,
         n_inputs: 2,
         n_outputs: 1,
@@ -741,8 +741,6 @@ mod tests {
         champion_copy_threshold: 1,
         stagnation_threshold: 15,
     };
-
-    const problem: Benchmark = Benchmark::Classification(ClassificationProblem::Xor);
 
     #[test]
     fn test_crossover() {
@@ -964,7 +962,9 @@ mod tests {
 
     #[test]
     fn test_population_initialization() {
-        let mut neat = Neat::new(config);
+        let mut neat = Neat::new(CONFIG);
+
+        let problem = Benchmark::new(Problem::Xor);
         neat.initialize(&problem);
 
         let population_size = neat.species.iter().map(|s| s.len()).sum::<usize>();
@@ -1171,7 +1171,7 @@ mod tests {
         let individual1 = Individual::new(genome);
         let individual2 = individual1.clone();
 
-        let mut neat = Neat::new(config);
+        let mut neat = Neat::new(CONFIG);
         neat.species = vec![Species::new(individual1, 0)];
         neat.assign_to_species(individual2);
 
@@ -1200,7 +1200,7 @@ mod tests {
         let individual1 = Individual::new(genome1);
         let individual2 = Individual::new(genome2);
 
-        let mut neat = Neat::new(config);
+        let mut neat = Neat::new(CONFIG);
         neat.species = vec![Species::new(individual1, 0)];
         neat.assign_to_species(individual2);
 
@@ -1231,7 +1231,7 @@ mod tests {
         let individual2 = Individual::new(genome2);
         let individual3 = individual1.clone();
 
-        let mut neat = Neat::new(config);
+        let mut neat = Neat::new(CONFIG);
         neat.species = vec![Species::new(individual1, 0)];
         neat.update_species(vec![individual2, individual3]);
 
@@ -1242,7 +1242,7 @@ mod tests {
 
     #[test]
     fn test_offsprings_split_different_fitnesses() {
-        let mut neat = Neat::new(config);
+        let mut neat = Neat::new(CONFIG);
         neat.species = vec![
             Species::new(Individual::new(Genome::new()), 0),
             Species::new(Individual::new(Genome::new()), 0),
@@ -1257,7 +1257,7 @@ mod tests {
 
     #[test]
     fn test_offsprings_split_same_fitnesses() {
-        let mut neat = Neat::new(config);
+        let mut neat = Neat::new(CONFIG);
         neat.species = vec![
             Species::new(Individual::new(Genome::new()), 0),
             Species::new(Individual::new(Genome::new()), 0),
@@ -1272,7 +1272,7 @@ mod tests {
 
     #[test]
     fn test_remove_stagnated_species_remove_species() {
-        let mut neat = Neat::new(config);
+        let mut neat = Neat::new(CONFIG);
         neat.species = vec![
             Species::new(Individual::new(Genome::new()), 0),
             Species::new(Individual::new(Genome::new()), 0),
@@ -1289,7 +1289,7 @@ mod tests {
 
     #[test]
     fn test_remove_stagnated_species_keep_species() {
-        let mut neat = Neat::new(config);
+        let mut neat = Neat::new(CONFIG);
         neat.species = vec![
             Species::new(Individual::new(Genome::new()), 0),
             Species::new(Individual::new(Genome::new()), 0),
