@@ -10,6 +10,8 @@ fn main() {
     let two_quarters = Benchmark::new(Problem::TwoQuarters);
     let square = Benchmark::new(Problem::Square);
     let cube = Benchmark::new(Problem::Cube);
+    let proben1_train = Benchmark::new(Problem::Proben1Train);
+    let proben1_test = Benchmark::new(Problem::Proben1Test);
 
     let network = Network::new(2, 2);
     let mut alg = Algorithm::ContinuousOneplusoneNA(network);
@@ -48,5 +50,11 @@ fn main() {
     let mut alg = Algorithm::ContinuousOneplusoneNA(network);
     alg.optimize_cmaes(&half);
     println!("half fitness: {:.2}", half.evaluate(&alg));
+    print!("{}", alg);
+
+    let network = DiscreteNetwork::new(RESOLUTION, 2, 9);
+    let mut alg = Algorithm::DiscreteOneplusoneNA(network);
+    alg.optimize(&proben1_train, N_ITERATIONS);
+    println!("proben1 fitness: {:.2}", proben1_test.evaluate(&alg));
     print!("{}", alg);
 }

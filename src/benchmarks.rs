@@ -1,3 +1,5 @@
+use std::io::{BufRead, BufReader};
+use std::fs::File;
 use std::f64::consts::PI;
 use crate::constants::{POLE_BALANCING_STEPS, POLE_BALANCING_MAX_FORCE};
 use crate::neuroevolution_algorithm::*;
@@ -16,6 +18,8 @@ pub enum Problem {
     Cube,
     Xor,
     PoleBalancing,
+    Proben1Train,
+    Proben1Test,
 }
 
 #[derive(Debug)]
@@ -42,6 +46,16 @@ impl Benchmark {
             Problem::Cube => Benchmark::SphereClassification(cube()),
             Problem::Xor => Benchmark::Classification(xor()),
             Problem::PoleBalancing => Benchmark::PoleBalancing,
+            Problem::Proben1Train => {
+                let data = read_cancer1_file();
+                let (train, _) = get_proben1_splits(&data);
+                Benchmark::Classification(train)
+            },
+            Problem::Proben1Test => {
+                let data = read_cancer1_file();
+                let (_, test) = get_proben1_splits(&data);
+                Benchmark::Classification(test)
+            },
         }
     }
 }
@@ -75,6 +89,35 @@ fn pole_balancing(alg: &Algorithm) -> f64 {
     }
 
     count as f64 / POLE_BALANCING_STEPS as f64
+}
+
+fn read_cancer1_file() -> LabeledPoints {
+    let file = File::open("cancer1.txt").expect("Failed to open file");
+    let reader = BufReader::new(file);
+
+    let mut data: LabeledPoints = Vec::new();
+    for line in reader.lines() {
+        if let Ok(line) = line {
+            let mut parts = line.split_whitespace();
+            let features: Vec<f64> = parts
+                .by_ref()
+                .take(9)
+                .map(|s| s.parse().unwrap())
+                .collect();
+            let class_int: u8 = parts.next().unwrap().parse().unwrap();
+            let class = class_int ==1;
+            data.push((features, class));
+        }
+    }
+
+    data
+}
+
+fn get_proben1_splits(data: &LabeledPoints) -> (LabeledPoints, LabeledPoints) {
+    let n = data.len() as f64 * 0.8;
+    let train = data.iter().take(n as usize).cloned().collect();
+    let test = data.iter().skip(n as usize).cloned().collect();
+    (train, test)
 }
 
 fn xor() -> LabeledPoints {
@@ -143,6 +186,22 @@ mod tests {
     use crate::neuroevolution_algorithm::Algorithm;
 
     const TOL: f64 = 5e-2;
+
+    #[test]
+    fn test_cancer1_daata_loading() {
+        let data = read_cancer1_file();
+        let (features, _) = &data[0];
+        assert_eq!(data.len(), 699);
+        assert_eq!(features.len(), 9);
+    }
+
+    #[test]
+    fn test_cancer1_data_split() {
+        let data = read_cancer1_file();
+        let (train, test) = get_proben1_splits(&data);
+        assert_eq!(train.len(), 559);
+        assert_eq!(test.len(), 140);
+    }
 
     #[test]
     fn test_half_network() {

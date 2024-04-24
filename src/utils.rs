@@ -1,29 +1,5 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use rand::prelude::*;
 use rand_distr::Uniform;
-use crate::benchmarks::LabeledPoints;
-
-pub fn read_cancer1_file() -> LabeledPoints {
-    let file = File::open("cancer1.txt").expect("Failed to open file");
-    let reader = BufReader::new(file);
-
-    let mut data: LabeledPoints = Vec::new();
-    for line in reader.lines() {
-        if let Ok(line) = line {
-            let mut parts = line.split_whitespace();
-            let features: Vec<f64> = parts
-                .by_ref()
-                .take(9)
-                .map(|s| s.parse().unwrap())
-                .collect();
-            let class = parts.next().unwrap().parse().unwrap();
-            data.push((features, class));
-        }
-    }
-
-    data
-}
 
 fn to_cartesian(spherical_coords: &Vec<f64>) -> Vec<f64> {
     let r = spherical_coords[0];
