@@ -46,7 +46,12 @@ fn main() {
             }
         }
         AlgorithmType::Neat => {
-            let mut neat_config_file = File::open("neat_conf.toml").unwrap();
+            let config_file_path = match cli.file {
+                Some(file) => file,
+                None => panic!("No configuration file provided"),
+            };
+
+            let mut neat_config_file = File::open(config_file_path).unwrap();
             let mut toml_config = String::new();
             neat_config_file.read_to_string(&mut toml_config).unwrap();
             let config: Config = toml::from_str(&toml_config).unwrap();
