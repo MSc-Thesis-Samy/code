@@ -59,6 +59,9 @@ fn main() {
             let neat = Neat::new(config);
             alg = Algorithm::Neat(neat);
         }
+        AlgorithmType::NeuralNetwork => {
+            panic!("Not implemented yet!");
+        }
     }
 
     match cli.gui {

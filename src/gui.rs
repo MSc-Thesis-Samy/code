@@ -202,12 +202,12 @@ impl State {
                 self.get_bend_decision_mesh(mesh, bias, angle, 0.1, 1., bend)?;
             }
 
-            Algorithm::Neat(neat) => {
+            Algorithm::Neat(_) | Algorithm::NeuralNetworek(_) => {
                 match &self.problem {
                     Benchmark::Classification(points) | Benchmark::SphereClassification(points) => {
                     // for now, draw outputs
                         for (point, _) in points {
-                            let output = neat.evaluate(&point);
+                            let output = self.alg.evaluate(&point);
                             // gradient from red to green
                             let color = graphics::Color::new(
                                 1.0 - output as f32,

@@ -1,24 +1,28 @@
+use rand::prelude::*;
+use rand_distr::Normal;
 use std::collections::HashMap;
+use cmaes::{DVector, fmax};
+use crate::neuroevolution_algorithm::{NeuroevolutionAlgorithm, Algorithm};
 
 pub type ActivationFunction = fn(f64) -> f64;
 
 pub const SIGMOID: ActivationFunction = |x| 1. / (1. + (-4.9 * x).exp());
 pub const IDENTITY: ActivationFunction = |x| x;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NeuronInput {
     input_id: u32,
     weight: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Neuron {
     id: u32,
     inputs: Vec<NeuronInput>,
     activation: ActivationFunction,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NeuralNetwork {
     input_ids: Vec<u32>,
     output_ids: Vec<u32>,
@@ -27,10 +31,18 @@ pub struct NeuralNetwork {
 }
 
 impl NeuronInput {
-    pub fn new(input_id: u32, weight: f64) -> NeuronInput {
-        NeuronInput {
-            input_id,
-            weight,
+    pub fn new(input_id: u32, weight: Option<f64>) -> NeuronInput {
+        if let Some(weight) = weight {
+            NeuronInput {
+                input_id,
+                weight,
+            }
+        } else {
+            let weights_distribution = Normal::new(0., 0.8).unwrap();
+            NeuronInput {
+                input_id,
+                weight: weights_distribution.sample(&mut thread_rng()),
+            }
         }
     }
 }
@@ -90,6 +102,56 @@ impl NeuralNetwork {
 
         outputs
     }
+
+    fn to_vector(&self) -> Vec<f64> {
+        let mut connection_weights = Vec::new();
+        for neuron in self.neurons.iter() {
+            for connection in &neuron.inputs {
+                connection_weights.push(connection.weight);
+            }
+        }
+
+        connection_weights
+    }
+
+    fn to_network(&self, connection_weights: &DVector::<f64>) -> NeuralNetwork {
+        let mut network = self.clone();
+        let mut conn_count = 0;
+        for neuron in network.neurons.iter_mut() {
+            for connection in &mut neuron.inputs {
+                connection.weight = connection_weights[conn_count];
+                conn_count += 1;
+            }
+        }
+
+        network
+    }
+}
+
+impl NeuroevolutionAlgorithm for NeuralNetwork {
+    fn optimization_step(&mut self, _problem: &crate::benchmarks::Benchmark) {
+        unimplemented!()
+    }
+
+    fn optimize_cmaes(&mut self, problem: &crate::benchmarks::Benchmark) {
+        let eval_fn = |x: &DVector<f64>| {
+            let network = self.to_network(x);
+            problem.evaluate(&Algorithm::NeuralNetworek(network))
+        };
+
+        let initial_connection_weights = self.to_vector();
+        let solution = fmax(eval_fn, initial_connection_weights, 0.4);
+        *self = self.to_network(&solution.point);
+    }
+
+    fn evaluate(&self, input: &Vec<f64>) -> f64 {
+        let output = self.feed_forward(input);
+        output[0]
+    }
+
+    fn optimize(&mut self, problem: &crate::benchmarks::Benchmark, _n_iters: u32) {
+        self.optimize_cmaes(problem);
+    }
 }
 
 #[cfg(test)]
@@ -103,7 +165,7 @@ mod tests {
         let neurons = vec![
             Neuron::new(1, vec![], IDENTITY),
             Neuron::new(2, vec![], IDENTITY),
-            Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5)], IDENTITY),
+            Neuron::new(3, vec![NeuronInput::new(1, Some(0.5)), NeuronInput::new(2, Some(0.5))], IDENTITY),
         ];
         let network = NeuralNetwork::new(input_ids, output_ids, None, neurons);
 
@@ -120,8 +182,8 @@ mod tests {
         let neurons = vec![
             Neuron::new(1, vec![] , IDENTITY),
             Neuron::new(2, vec![], IDENTITY),
-            Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5)], IDENTITY),
-            Neuron::new(4, vec![NeuronInput::new(3, 0.5)], IDENTITY),
+            Neuron::new(3, vec![NeuronInput::new(1, Some(0.5)), NeuronInput::new(2, Some(0.5))], IDENTITY),
+            Neuron::new(4, vec![NeuronInput::new(3, Some(0.5))], IDENTITY),
         ];
         let network = NeuralNetwork::new(input_ids, output_ids, None, neurons);
 
@@ -138,7 +200,7 @@ mod tests {
         let neurons = vec![
             Neuron::new(1, vec![], IDENTITY),
             Neuron::new(2, vec![], IDENTITY),
-            Neuron::new(3, vec![NeuronInput::new(1, 0.5), NeuronInput::new(2, 0.5), NeuronInput::new(4, 1.)], IDENTITY),
+            Neuron::new(3, vec![NeuronInput::new(1, Some(0.5)), NeuronInput::new(2, Some(0.5)), NeuronInput::new(4, Some(1.))], IDENTITY),
             Neuron::new(4, vec![], IDENTITY),
         ];
         let network = NeuralNetwork::new(input_ids, output_ids, Some(4), neurons);

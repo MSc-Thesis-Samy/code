@@ -344,14 +344,14 @@ impl Individual {
 
         // Add hidden neurons
         for node in self.genome.nodes.iter().filter(|n| n.layer == NodeType::Hidden) {
-            let inputs = self.genome.connections.iter().filter(|c| c.out_node == node.id && c.enabled).map(|c| NeuronInput::new(c.in_node, c.weight)).collect::<Vec<_>>();
+            let inputs = self.genome.connections.iter().filter(|c| c.out_node == node.id && c.enabled).map(|c| NeuronInput::new(c.in_node, Some(c.weight))).collect::<Vec<_>>();
             let neuron = Neuron::new(node.id, inputs, node.activation);
             neurons.push(neuron);
         }
 
         // Add output neurons
         for output_id in output_ids.iter() {
-            let inputs = self.genome.connections.iter().filter(|c| c.out_node == *output_id && c.enabled).map(|c| NeuronInput::new(c.in_node, c.weight)).collect::<Vec<_>>();
+            let inputs = self.genome.connections.iter().filter(|c| c.out_node == *output_id && c.enabled).map(|c| NeuronInput::new(c.in_node, Some(c.weight))).collect::<Vec<_>>();
             let neuron = Neuron::new(*output_id, inputs, *output_activations.next().unwrap());
             neurons.push(neuron);
         }
