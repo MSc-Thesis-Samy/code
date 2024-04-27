@@ -73,6 +73,33 @@ impl Neuron {
     }
 }
 
+impl NeuralNetworkConfig {
+    pub fn to_neural_network(&self) -> NeuralNetwork {
+        let mut neurons = Vec::new();
+        for neuron_config in self.neurons.iter() {
+            let activation = match neuron_config.activation.as_str() {
+                "sigmoid" => SIGMOID,
+                "identity" => IDENTITY,
+                _ => panic!("Unknown activation function"),
+            };
+
+            let mut inputs = Vec::new();
+            for input in neuron_config.inputs.iter() {
+                inputs.push(NeuronInput::new(*input, None));
+            }
+
+            neurons.push(Neuron::new(neuron_config.id, inputs, activation));
+        }
+
+        NeuralNetwork {
+            input_ids: self.input_ids.clone(),
+            output_ids: self.output_ids.clone(),
+            bias_id: self.bias_id,
+            neurons,
+        }
+    }
+}
+
 impl NeuralNetwork {
     pub fn new(input_ids: Vec<u32>, output_ids: Vec<u32>, bias_id: Option<u32>, neurons: Vec<Neuron>) -> NeuralNetwork {
         NeuralNetwork {
@@ -146,13 +173,13 @@ impl NeuralNetwork {
 
 impl NeuroevolutionAlgorithm for NeuralNetwork {
     fn optimization_step(&mut self, _problem: &crate::benchmarks::Benchmark) {
-        unimplemented!()
+        unimplemented!("Optimization step not implemented for NeuralNetwork");
     }
 
     fn optimize_cmaes(&mut self, problem: &crate::benchmarks::Benchmark) {
         let eval_fn = |x: &DVector<f64>| {
             let network = self.to_network(x);
-            problem.evaluate(&Algorithm::NeuralNetworek(network))
+            problem.evaluate(&Algorithm::NeuralNetwork(network))
         };
 
         let initial_connection_weights = self.to_vector();

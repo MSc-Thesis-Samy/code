@@ -202,7 +202,7 @@ impl State {
                 self.get_bend_decision_mesh(mesh, bias, angle, 0.1, 1., bend)?;
             }
 
-            Algorithm::Neat(_) | Algorithm::NeuralNetworek(_) => {
+            Algorithm::Neat(_) | Algorithm::NeuralNetwork(_) => {
                 match &self.problem {
                     Benchmark::Classification(points) | Benchmark::SphereClassification(points) => {
                     // for now, draw outputs

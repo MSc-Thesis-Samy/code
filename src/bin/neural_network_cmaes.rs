@@ -15,7 +15,7 @@ fn main() {
     );
 
     let problem = Benchmark::new(Problem::Xor);
-    let mut alg = Algorithm::NeuralNetworek(network);
+    let mut alg = Algorithm::NeuralNetwork(network);
     alg.optimize_cmaes(&problem);
     println!("Fitness: {:.2}", problem.evaluate(&alg));
 }

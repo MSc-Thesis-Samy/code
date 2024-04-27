@@ -24,7 +24,7 @@ pub enum Algorithm {
     ContinuousBNA(VNeuron),
     Neat(Neat),
     NeatIndividual(Individual),
-    NeuralNetworek(NeuralNetwork),
+    NeuralNetwork(NeuralNetwork),
 }
 
 impl std::fmt::Display for Algorithm {
@@ -35,7 +35,7 @@ impl std::fmt::Display for Algorithm {
             Algorithm::DiscreteBNA(vneuron) => write!(f, "{}", vneuron),
             Algorithm::ContinuousBNA(vneuron) => write!(f, "{}", vneuron),
             Algorithm::Neat(neat) => write!(f, "{:?}", neat), // TODO: Implement Display for Neat
-            Algorithm::NeuralNetworek(network) => write!(f, "{:?}", network),
+            Algorithm::NeuralNetwork(network) => write!(f, "{:?}", network),
             Algorithm::NeatIndividual(individual) => write!(f, "{:?}", individual),
         }
     }
@@ -49,7 +49,7 @@ impl NeuroevolutionAlgorithm for Algorithm {
             Algorithm::DiscreteBNA(vneuron) => vneuron.optimize(problem, n_iters),
             Algorithm::ContinuousBNA(vneuron) => vneuron.optimize(problem, n_iters),
             Algorithm::Neat(neat) => neat.optimize(problem, n_iters),
-            Algorithm::NeuralNetworek(network) => network.optimize(problem, n_iters),
+            Algorithm::NeuralNetwork(network) => network.optimize(problem, n_iters),
             Algorithm::NeatIndividual(individual) => individual.optimize(problem, n_iters),
         }
     }
@@ -61,7 +61,7 @@ impl NeuroevolutionAlgorithm for Algorithm {
             Algorithm::DiscreteBNA(vneuron) => vneuron.optimize_cmaes(problem),
             Algorithm::ContinuousBNA(vneuron) => vneuron.optimize_cmaes(problem),
             Algorithm::Neat(neat) => neat.optimize_cmaes(problem),
-            Algorithm::NeuralNetworek(network) => network.optimize_cmaes(problem),
+            Algorithm::NeuralNetwork(network) => network.optimize_cmaes(problem),
             Algorithm::NeatIndividual(individual) => individual.optimize_cmaes(problem),
         }
     }
@@ -73,7 +73,7 @@ impl NeuroevolutionAlgorithm for Algorithm {
             Algorithm::DiscreteBNA(vneuron) => vneuron.evaluate(input),
             Algorithm::ContinuousBNA(vneuron) => vneuron.evaluate(input),
             Algorithm::Neat(neat) => neat.evaluate(input),
-            Algorithm::NeuralNetworek(network) => network.evaluate(input),
+            Algorithm::NeuralNetwork(network) => network.evaluate(input),
             Algorithm::NeatIndividual(individual) => individual.evaluate(input),
         }
     }
@@ -85,7 +85,7 @@ impl NeuroevolutionAlgorithm for Algorithm {
             Algorithm::DiscreteBNA(vneuron) => vneuron.optimization_step(problem),
             Algorithm::ContinuousBNA(vneuron) => vneuron.optimization_step(problem),
             Algorithm::Neat(neat) => neat.optimization_step(problem),
-            Algorithm::NeuralNetworek(network) => network.optimization_step(problem),
+            Algorithm::NeuralNetwork(network) => network.optimization_step(problem),
             Algorithm::NeatIndividual(individual) => individual.optimization_step(problem),
         }
     }

@@ -71,8 +71,9 @@ fn main() {
             network_config_file.read_to_string(&mut toml_config).unwrap();
 
             let network_config: NeuralNetworkConfig = toml::from_str(&toml_config).unwrap();
-            println!("{:?}", network_config);
-            panic!("Not implemented");
+
+            let network = network_config.to_neural_network();
+            alg = Algorithm::NeuralNetwork(network);
         }
     }
 
