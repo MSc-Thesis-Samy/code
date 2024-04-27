@@ -12,6 +12,7 @@ use neuroevolution::neuroevolution_algorithm::{NeuroevolutionAlgorithm, Algorith
 use neuroevolution::benchmarks::*;
 use neuroevolution::constants::*;
 use neuroevolution::neat::*;
+use neuroevolution::neural_network::{NeuralNetwork, NeuralNetworkConfig};
 
 fn main() {
     let cli = Cli::parse();
@@ -60,7 +61,18 @@ fn main() {
             alg = Algorithm::Neat(neat);
         }
         AlgorithmType::NeuralNetwork => {
-            panic!("Not implemented yet!");
+            let config_file_path = match cli.file {
+                Some(file) => file,
+                None => panic!("No configuration file provided"),
+            };
+
+            let mut network_config_file = File::open(config_file_path).unwrap();
+            let mut toml_config = String::new();
+            network_config_file.read_to_string(&mut toml_config).unwrap();
+
+            let network_config: NeuralNetworkConfig = toml::from_str(&toml_config).unwrap();
+            println!("{:?}", network_config);
+            panic!("Not implemented");
         }
     }
 

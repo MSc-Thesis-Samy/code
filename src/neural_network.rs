@@ -1,4 +1,5 @@
 use rand::prelude::*;
+use serde_derive::Deserialize;
 use rand_distr::Normal;
 use std::collections::HashMap;
 use cmaes::{DVector, fmax};
@@ -20,6 +21,21 @@ pub struct Neuron {
     id: u32,
     inputs: Vec<NeuronInput>,
     activation: ActivationFunction,
+}
+
+#[derive(Debug, Deserialize)]
+struct NeuronConfig {
+    id: u32,
+    inputs: Vec<u32>,
+    activation: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct NeuralNetworkConfig {
+    input_ids: Vec<u32>,
+    output_ids: Vec<u32>,
+    bias_id: Option<u32>,
+    neurons: Vec<NeuronConfig>,
 }
 
 #[derive(Debug, Clone)]
