@@ -17,6 +17,7 @@ pub trait NeuroevolutionAlgorithm {
     fn evaluate(&self, input: &Vec<f64>) -> f64;
 }
 
+#[derive(Clone)]
 pub enum Algorithm {
     DiscreteOneplusoneNA(DiscreteNetwork),
     ContinuousOneplusoneNA(Network),

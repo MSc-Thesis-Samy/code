@@ -1,5 +1,8 @@
+use std::time::Instant;
+use rayon::prelude::*;
 use std::fs::File;
 use std::io::Read;
+use std::io::Write;
 use toml;
 use ggez::*;
 use clap::Parser;
@@ -12,7 +15,7 @@ use neuroevolution::neuroevolution_algorithm::{NeuroevolutionAlgorithm, Algorith
 use neuroevolution::benchmarks::*;
 use neuroevolution::constants::*;
 use neuroevolution::neat::*;
-use neuroevolution::neural_network::{NeuralNetwork, NeuralNetworkConfig};
+use neuroevolution::neural_network::NeuralNetworkConfig;
 
 fn main() {
     let cli = Cli::parse();
@@ -75,6 +78,30 @@ fn main() {
             let network = network_config.to_neural_network();
             alg = Algorithm::NeuralNetwork(network);
         }
+    }
+
+    if let Some(n_runs) = cli.test_runs {
+        let (fitness_mean, elapsed_mean) = (0..n_runs).into_par_iter().map(|_| {
+            let mut algorithm = alg.clone(); // TODO initialize with different initial values
+            let problem = Benchmark::new(cli.problem);
+
+            let start = Instant::now();
+            algorithm.optimize(&problem, cli.iterations);
+            let elapsed = start.elapsed().as_secs_f64();
+
+            (problem.evaluate(&algorithm), elapsed)
+        }).reduce(|| (0., 0.), |a, b| (a.0 + b.0, a.1 + b.1));
+
+        if let Some(output_path) = cli.output {
+            let mut output_file = File::create(output_path).unwrap();
+            writeln!(output_file, "Mean fitness: {:.2}", fitness_mean / n_runs as f64).unwrap();
+            writeln!(output_file, "Mean elapsed time: {:.3} s", elapsed_mean / n_runs as f64).unwrap();
+        } else {
+            println!("Mean fitness: {:.2}", fitness_mean / n_runs as f64);
+            println!("Mean elapsed time: {:.3} s", elapsed_mean / n_runs as f64);
+        }
+
+        return;
     }
 
     match cli.gui {

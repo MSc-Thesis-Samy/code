@@ -43,14 +43,14 @@ pub struct Individual {
     fitness: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Mutation {
     NewConnection(ConnectionGene),
     NewNode(NodeGene, ConnectionGene, ConnectionGene),
     // TODO Add weight perturbation?
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct History {
     innovation: u32,
     nodes_nb: u32,
@@ -58,7 +58,7 @@ struct History {
     generation: u32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub population_size: u32,
     pub n_inputs: u32,
@@ -80,7 +80,7 @@ pub struct Config {
     pub stagnation_threshold: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Species {
     representative: Individual,
     members: Population,
@@ -88,7 +88,7 @@ struct Species {
     max_fitness: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Neat {
     history: History,
     config: Config,

@@ -22,8 +22,12 @@ pub struct Cli {
     pub neurons: usize,
     #[arg(help = "Display visualization", short, long)]
     pub gui: bool,
-    #[arg(help = "Neat configuration file", short, long)]
+    #[arg(help = "Configuration file", short, long)]
     pub file: Option<String>,
+    #[arg(help = "Results output file", short, long)]
+    pub output: Option<String>,
+    #[arg(help = "Number of runs", short, long)]
+    pub test_runs: Option<usize>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
