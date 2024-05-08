@@ -20,6 +20,7 @@ pub enum Problem {
     PoleBalancing,
     Proben1Train,
     Proben1Test,
+    LocalOpt,
 }
 
 #[derive(Debug)]
@@ -42,6 +43,7 @@ impl Benchmark {
             Problem::Half => Benchmark::SphereClassification(half()),
             Problem::Quarter => Benchmark::SphereClassification(quarter()),
             Problem::TwoQuarters => Benchmark::SphereClassification(two_quarters()),
+            Problem::LocalOpt => Benchmark::SphereClassification(local_opt()),
             Problem::Square => Benchmark::SphereClassification(square()),
             Problem::Cube => Benchmark::SphereClassification(cube()),
             Problem::Xor => Benchmark::Classification(xor()),
@@ -152,6 +154,15 @@ fn two_quarters() -> LabeledPoints {
         .map(|i| {
             let angle = 2. * PI * i as f64 / POLE_BALANCING_STEPS as f64;
             (vec![1., angle], angle <= PI / 2. || (angle >= PI && angle <= 3. * PI / 2.))
+        })
+        .collect::<LabeledPoints>()
+}
+
+fn local_opt() -> LabeledPoints {
+    (0..POLE_BALANCING_STEPS)
+        .map(|i| {
+            let angle = 2. * PI * i as f64 / POLE_BALANCING_STEPS as f64;
+            (vec![1., angle], angle <= PI / 3. || (angle >= 2. * PI / 3. && angle <= PI) || (angle >= 4. * PI / 3. && angle <= 11. * PI / 6.))
         })
         .collect::<LabeledPoints>()
 }
