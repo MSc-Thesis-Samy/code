@@ -6,15 +6,55 @@ use crate::benchmarks::Benchmark;
 use crate::neat::{Neat, Individual};
 use crate::neural_network::NeuralNetwork;
 
+const MAX_FITNESS: f64 = 1.0;
+
 pub trait NeuroevolutionAlgorithm {
     fn optimization_step(&mut self, problem: &Benchmark);
+    fn optimize_cmaes(&mut self, problem: &Benchmark);
+    fn evaluate(&self, input: &Vec<f64>) -> f64;
+
     fn optimize(&mut self, problem: &Benchmark, n_iters: u32) {
         for _ in 0..n_iters {
             self.optimization_step(problem);
         }
     }
-    fn optimize_cmaes(&mut self, problem: &Benchmark);
-    fn evaluate(&self, input: &Vec<f64>) -> f64;
+
+    fn optimize_with_early_stopping(&mut self, problem: &Benchmark, max_iters: u32, fitness_tol: Option<f64>, max_stagnation: Option<u32>) -> u32 where Self: Sized {
+        let mut best_fitness = 0.0;
+        let mut stagnation = 0;
+        let mut iters = 0;
+
+        loop {
+            self.optimization_step(problem);
+            iters += 1;
+
+            let fitness = problem.evaluate(self);
+            if fitness > best_fitness {
+                best_fitness = fitness;
+                stagnation = 0;
+            } else {
+                stagnation += 1;
+            }
+
+            if let Some(fitness_tol) = fitness_tol {
+                if (MAX_FITNESS - best_fitness).abs() < fitness_tol {
+                    break;
+                }
+            }
+
+            if let Some(max_stagnation) = max_stagnation {
+                if stagnation >= max_stagnation {
+                    break;
+                }
+            }
+
+            if iters >= max_iters {
+                break;
+            }
+        }
+
+        iters
+    }
 }
 
 #[derive(Clone)]
@@ -36,7 +76,7 @@ impl std::fmt::Display for Algorithm {
             Algorithm::DiscreteBNA(vneuron) => write!(f, "{}", vneuron),
             Algorithm::ContinuousBNA(vneuron) => write!(f, "{}", vneuron),
             Algorithm::Neat(neat) => write!(f, "{:?}", neat), // TODO: Implement Display for Neat
-            Algorithm::NeuralNetwork(network) => write!(f, "{:?}", network),
+            Algorithm::NeuralNetwork(network) => write!(f, "{:?}", network), // TODO: Implement Display for NeuralNetwork
             Algorithm::NeatIndividual(individual) => write!(f, "{:?}", individual),
         }
     }

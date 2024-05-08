@@ -31,7 +31,7 @@ pub enum Benchmark {
 }
 
 impl Benchmark {
-    pub fn evaluate(&self, alg: &Algorithm) -> f64 {
+    pub fn evaluate(&self, alg: &dyn NeuroevolutionAlgorithm) -> f64 {
         match self {
             Benchmark::PoleBalancing => pole_balancing(alg),
             Benchmark::Classification(points) | Benchmark::SphereClassification(points) => classification(alg, points),
@@ -62,7 +62,7 @@ impl Benchmark {
     }
 }
 
-fn classification(alg: &Algorithm, points: &LabeledPoints) -> f64 {
+fn classification(alg: &dyn NeuroevolutionAlgorithm, points: &LabeledPoints) -> f64 {
     let distances_sum = points
         .iter()
         .map(|(point, label)| {
@@ -74,7 +74,7 @@ fn classification(alg: &Algorithm, points: &LabeledPoints) -> f64 {
     (points.len() as f64 - distances_sum) / points.len() as f64
 }
 
-fn pole_balancing(alg: &Algorithm) -> f64 {
+fn pole_balancing(alg: &dyn NeuroevolutionAlgorithm) -> f64 {
     let mut state = State::default();
     let mut count = 0;
 

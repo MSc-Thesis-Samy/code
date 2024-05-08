@@ -101,7 +101,7 @@ impl NeuroevolutionAlgorithm for DiscreteVNeuron {
             new_vneuron.bias = DiscreteVNeuron::mutate_component(self.bias, self.resolution + 1);
         }
 
-        if problem.evaluate(&&Algorithm::DiscreteBNA(new_vneuron.clone())) > problem.evaluate(&Algorithm::DiscreteBNA(self.clone())) {
+        if problem.evaluate(&Algorithm::DiscreteBNA(new_vneuron.clone())) > problem.evaluate(&Algorithm::DiscreteBNA(self.clone())) {
             *self = new_vneuron;
         }
     }
