@@ -4,7 +4,7 @@
 ### -- specify queue --
 #BSUB -q hpc
 ### -- set the job Name --
-#BSUB -J Neuroevolution_testing
+#BSUB -J Bench
 ### -- ask for number of cores (default: 1) --
 #BSUB -n 10
 ### -- specify that the cores must be on the same host --
@@ -28,5 +28,11 @@
 #BSUB -o ~/Output_%J.out
 #BSUB -e ~/Output_%J.err
 
+n_runs=1000
+
 cd ~/code-master
-cargo run -- oneplusonena half -i 500 -t 1000 -o oneplusonena_half_500_1
+
+for resolution in $(seq 100 100 1000)
+do
+      ./target/release/main oneplusonena half -i 500 -n 1 -r $resolution -t $n_runs -o output/oneplusone_na_half_$resolution.csv
+done
