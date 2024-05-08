@@ -5,3 +5,5 @@ pub const POLE_BALANCING_STEPS: usize = 1000;
 pub const POLE_BALANCING_MAX_FORCE: f64 = 10.;
 pub const ROAD_LENGTH: f64 = 4.8;
 pub const N_RUNS: usize = 100;
+pub const MAX_FITNESS_TOL: f64 = 2e-2;
+pub const MAX_FITNESS: f64 = 1.0;

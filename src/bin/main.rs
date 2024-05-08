@@ -26,28 +26,34 @@ fn main() {
 
     match cli.algorithm {
         AlgorithmType::Oneplusonena => {
-            match cli.continuous {
-                true => {
-                    let network = Network::new(cli.neurons, dim);
-                    alg = Algorithm::ContinuousOneplusoneNA(network);
-                }
-                false => {
-                    let network = DiscreteNetwork::new(cli.resolution, cli.neurons, dim);
-                    alg = Algorithm::DiscreteOneplusoneNA(network);
-                }
-            }
+            // match cli.continuous {
+            //     true => {
+            //         let network = Network::new(cli.neurons, dim);
+            //         alg = Algorithm::ContinuousOneplusoneNA(network);
+            //     }
+            //     false => {
+            //         let network = DiscreteNetwork::new(cli.resolution, cli.neurons, dim);
+            //         alg = Algorithm::DiscreteOneplusoneNA(network);
+            //     }
+            // }
+
+            let network = DiscreteNetwork::new(cli.resolution, cli.neurons, dim);
+            alg = Algorithm::DiscreteOneplusoneNA(network);
         },
         AlgorithmType::Bna => {
-            match cli.continuous {
-                true => {
-                    let vneuron = VNeuron::new(dim);
-                    alg = Algorithm::ContinuousBNA(vneuron);
-                },
-                false => {
-                    let vneuron = DiscreteVNeuron::new(cli.resolution, dim);
-                    alg = Algorithm::DiscreteBNA(vneuron);
-                }
-            }
+            // match cli.continuous {
+            //     true => {
+            //         let vneuron = VNeuron::new(dim);
+            //         alg = Algorithm::ContinuousBNA(vneuron);
+            //     },
+            //     false => {
+            //         let vneuron = DiscreteVNeuron::new(cli.resolution, dim);
+            //         alg = Algorithm::DiscreteBNA(vneuron);
+            //     }
+            // }
+
+            let vneuron = DiscreteVNeuron::new(cli.resolution, dim);
+            alg = Algorithm::DiscreteBNA(vneuron);
         }
         AlgorithmType::Neat => {
             let config_file_path = match cli.file {
@@ -81,24 +87,31 @@ fn main() {
     }
 
     if let Some(n_runs) = cli.test_runs {
-        let (fitness_mean, elapsed_mean) = (0..n_runs).into_par_iter().map(|_| {
+        let results = (0..n_runs).into_par_iter().map(|_| {
             let mut algorithm = alg.clone(); // TODO initialize with different initial values
             let problem = Benchmark::new(cli.problem);
 
             let start = Instant::now();
-            algorithm.optimize(&problem, cli.iterations);
+            let n_iters = algorithm.optimize_with_early_stopping(&problem, cli.iterations, cli.error_tol, None);
             let elapsed = start.elapsed().as_secs_f64();
 
-            (problem.evaluate(&algorithm), elapsed)
-        }).reduce(|| (0., 0.), |a, b| (a.0 + b.0, a.1 + b.1));
+            (problem.evaluate(&algorithm), n_iters, elapsed)
+        }).collect::<Vec<_>>();
 
         if let Some(output_path) = cli.output {
             let mut output_file = File::create(output_path).unwrap();
-            writeln!(output_file, "Mean fitness: {:.2}", fitness_mean / n_runs as f64).unwrap();
-            writeln!(output_file, "Mean elapsed time: {:.3} s", elapsed_mean / n_runs as f64).unwrap();
+            writeln!(output_file, "Fitness,Iterations,Elapsed time").unwrap();
+            for (fitness, n_iters, elapsed) in results {
+                writeln!(output_file, "{:.2},{},{:.3}", fitness, n_iters, elapsed).unwrap();
+            }
         } else {
-            println!("Mean fitness: {:.2}", fitness_mean / n_runs as f64);
-            println!("Mean elapsed time: {:.3} s", elapsed_mean / n_runs as f64);
+            let fitness_mean = results.iter().map(|(fitness, _, _)| fitness).sum::<f64>() / n_runs as f64;
+            let n_iters_mean = results.iter().map(|(_, n_iters, _)| n_iters).sum::<u32>() / n_runs as u32;
+            let elapsed_mean = results.iter().map(|(_, _, elapsed)| elapsed).sum::<f64>() / n_runs as f64;
+
+            println!("Mean fitness: {:.2}", fitness_mean);
+            println!("Mean iterations: {}", n_iters_mean);
+            println!("Mean elapsed time: {:.3} s", elapsed_mean);
         }
 
         return;
@@ -114,7 +127,7 @@ fn main() {
             match problem {
                 Benchmark::PoleBalancing => {
                     println!("Evolving algorithm...");
-                    alg.optimize(&problem, cli.iterations);
+                    alg.optimize_with_early_stopping(&problem, cli.iterations, cli.error_tol, None);
                     println!("Fitness: {}", problem.evaluate(&alg));
 
                     let pole_balancing_state = neuroevolution::pole_balancing::State::default();
@@ -130,9 +143,8 @@ fn main() {
         }
 
         false => {
-            alg.optimize(&problem, cli.iterations);
-
-            println!("fitness: {:.2}", problem.evaluate(&alg));
+            let n_iters = alg.optimize_with_early_stopping(&problem, cli.iterations, cli.error_tol, None);
+            println!("Iterations: {}\nFitness: {:.2}", n_iters, problem.evaluate(&alg));
         }
     }
 }

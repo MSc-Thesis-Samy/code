@@ -5,8 +5,7 @@ use crate::discrete_vneuron::DiscreteVNeuron;
 use crate::benchmarks::Benchmark;
 use crate::neat::{Neat, Individual};
 use crate::neural_network::NeuralNetwork;
-
-const MAX_FITNESS: f64 = 1.0;
+use crate::constants::MAX_FITNESS;
 
 pub trait NeuroevolutionAlgorithm {
     fn optimization_step(&mut self, problem: &Benchmark);
@@ -19,7 +18,7 @@ pub trait NeuroevolutionAlgorithm {
         }
     }
 
-    fn optimize_with_early_stopping(&mut self, problem: &Benchmark, max_iters: u32, fitness_tol: Option<f64>, max_stagnation: Option<u32>) -> u32 where Self: Sized {
+    fn optimize_with_early_stopping(&mut self, problem: &Benchmark, max_iters: u32, fitness_tol: f64, max_stagnation: Option<u32>) -> u32 where Self: Sized {
         let mut best_fitness = 0.0;
         let mut stagnation = 0;
         let mut iters = 0;
@@ -36,10 +35,8 @@ pub trait NeuroevolutionAlgorithm {
                 stagnation += 1;
             }
 
-            if let Some(fitness_tol) = fitness_tol {
-                if (MAX_FITNESS - best_fitness).abs() < fitness_tol {
-                    break;
-                }
+            if (MAX_FITNESS - best_fitness).abs() < fitness_tol {
+                break;
             }
 
             if let Some(max_stagnation) = max_stagnation {
