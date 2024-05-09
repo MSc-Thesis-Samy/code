@@ -32,7 +32,7 @@ n_runs=1000
 
 cd ~/code-master
 
-for resolution in $(seq 100 100 1000)
+for resolution in $(seq 50 50 1500)
 do
-      ./target/release/main oneplusonena half -i 500 -n 1 -r $resolution -t $n_runs -o ~/output/oneplusone_na_half_$resolution.csv
+      ./target/release/main oneplusonena half -i 200 -n 1 -r $resolution -t $n_runs -o ~/output/oneplusonena/half/oneplusonena_half_$resolution.csv
 done
