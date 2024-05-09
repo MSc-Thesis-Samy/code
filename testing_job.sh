@@ -34,5 +34,5 @@ cd ~/code-master
 
 for resolution in $(seq 100 100 1000)
 do
-      ./target/release/main oneplusonena half -i 500 -n 1 -r $resolution -t $n_runs -o output/oneplusone_na_half_$resolution.csv
+      ./target/release/main oneplusonena half -i 500 -n 1 -r $resolution -t $n_runs -o ~/output/oneplusone_na_half_$resolution.csv
 done
