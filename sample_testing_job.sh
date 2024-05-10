@@ -38,6 +38,6 @@ for resolution in 2 5 10 $(seq 50 50 1500) do
 do
     for stag in 5 15 30 60 80
     do
-        ./target/release/main $algorithm $problem -n 1 -r $resolution -s $stag -t $n_runs -o ~/output/$algorithm/$problem/stag_$stag/$algorithm_$problem_$resolution.csvdone
+        ./target/release/main $algorithm $problem -n 1 -r $resolution -s $stag -t $n_runs -o ~/output/$algorithm/$problem/stag_$stag/$algorithm_$problem_$resolution.csv
     done
 done
