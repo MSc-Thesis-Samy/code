@@ -29,10 +29,11 @@
 #BSUB -e ~/Output_%J.err
 
 n_runs=1000
+problem=quarter
+algorithm=oneplusonena
 
 cd ~/code-master
 
 for resolution in $(seq 50 50 1500)
 do
-      ./target/release/main oneplusonena half -i 200 -n 1 -r $resolution -t $n_runs -o ~/output/oneplusonena/half/oneplusonena_half_$resolution.csv
-done
+      ./target/release/main $algorithm $problem -i 200 -n 1 -r $resolution -t $n_runs -o ~/output/$algorithm/$problem/$algorithm_$problem_$resolution.csvdone

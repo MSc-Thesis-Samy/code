@@ -51,6 +51,9 @@ fn main() {
     let problem = Benchmark::new(cli.problem);
     let resolution = cli.resolution;
     let neurons = cli.neurons;
+    let iterations = cli.iterations;
+    let stagnation = cli.stagnation;
+    let max_fitness_tol = cli.error_tol;
 
     let mut alg: Algorithm;
 
@@ -67,14 +70,14 @@ fn main() {
 
     if let Some(n_runs) = cli.test_runs {
         let results = (0..n_runs).into_par_iter().map(|_| {
-            let mut algorithm = get_algorithm(cli.algorithm, resolution, neurons, dim, &toml_config);
+            let mut alg = get_algorithm(cli.algorithm, resolution, neurons, dim, &toml_config);
             let problem = Benchmark::new(cli.problem);
 
             let start = Instant::now();
-            let n_iters = algorithm.optimize_with_early_stopping(&problem, cli.iterations, cli.error_tol, None);
+            let n_iters = alg.optimize_with_early_stopping(&problem, iterations, max_fitness_tol, stagnation);
             let elapsed = start.elapsed().as_secs_f64();
 
-            (problem.evaluate(&algorithm), n_iters, elapsed)
+            (problem.evaluate(&alg), n_iters, elapsed)
         }).collect::<Vec<_>>();
 
         if let Some(output_path) = cli.output {
@@ -106,7 +109,7 @@ fn main() {
             match problem {
                 Benchmark::PoleBalancing => {
                     println!("Evolving algorithm...");
-                    alg.optimize_with_early_stopping(&problem, cli.iterations, cli.error_tol, None);
+                    let _ = alg.optimize_with_early_stopping(&problem, iterations, max_fitness_tol, stagnation);
                     println!("Fitness: {}", problem.evaluate(&alg));
 
                     let pole_balancing_state = neuroevolution::pole_balancing::State::default();

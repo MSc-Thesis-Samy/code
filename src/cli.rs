@@ -30,8 +30,8 @@ pub struct Cli {
     pub test_runs: Option<usize>,
     #[arg(help = "Max fitness tolerance", short, long, default_value_t = MAX_FITNESS_TOL)]
     pub error_tol: f64,
-    // #[arg(help = "Max stagnation", short, long)]
-    // pub max_stagnation: Option<u32>,
+    #[arg(help = "Max stagnation", short, long)]
+    pub stagnation: Option<u32>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
