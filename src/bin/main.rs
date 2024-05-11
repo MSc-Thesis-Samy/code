@@ -118,7 +118,7 @@ fn main() {
                 }
 
                 _ => {
-                    let state = neuroevolution::gui::State::new(alg, problem, N_ITERATIONS);
+                    let state = neuroevolution::gui::State::new(alg, problem, iterations);
                     event::run(ctx, event_loop, state);
                 }
             }
