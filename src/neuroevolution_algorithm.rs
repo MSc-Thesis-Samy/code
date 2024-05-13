@@ -1,7 +1,7 @@
 use crate::network::Network;
 use crate::discrete_network::DiscreteNetwork;
+use crate::discrete_vnetwork::DiscreteVNetwork;
 use crate::vneuron::VNeuron;
-use crate::discrete_vneuron::DiscreteVNeuron;
 use crate::benchmarks::Benchmark;
 use crate::neat::{Neat, Individual};
 use crate::neural_network::NeuralNetwork;
@@ -58,7 +58,7 @@ pub trait NeuroevolutionAlgorithm {
 pub enum Algorithm {
     DiscreteOneplusoneNA(DiscreteNetwork),
     ContinuousOneplusoneNA(Network),
-    DiscreteBNA(DiscreteVNeuron),
+    DiscreteBNA(DiscreteVNetwork),
     ContinuousBNA(VNeuron),
     Neat(Neat),
     NeatIndividual(Individual),
@@ -70,7 +70,7 @@ impl std::fmt::Display for Algorithm {
         match self {
             Algorithm::DiscreteOneplusoneNA(network) => write!(f, "{}", network),
             Algorithm::ContinuousOneplusoneNA(network) => write!(f, "{}", network),
-            Algorithm::DiscreteBNA(vneuron) => write!(f, "{}", vneuron),
+            Algorithm::DiscreteBNA(vnetwork) => write!(f, "{}", vnetwork),
             Algorithm::ContinuousBNA(vneuron) => write!(f, "{}", vneuron),
             Algorithm::Neat(neat) => write!(f, "{:?}", neat), // TODO: Implement Display for Neat
             Algorithm::NeuralNetwork(network) => write!(f, "{:?}", network), // TODO: Implement Display for NeuralNetwork
@@ -84,7 +84,7 @@ impl NeuroevolutionAlgorithm for Algorithm {
         match self {
             Algorithm::DiscreteOneplusoneNA(network) => network.optimize(problem, n_iters),
             Algorithm::ContinuousOneplusoneNA(network) => network.optimize(problem, n_iters),
-            Algorithm::DiscreteBNA(vneuron) => vneuron.optimize(problem, n_iters),
+            Algorithm::DiscreteBNA(vnetwork) => vnetwork.optimize(problem, n_iters),
             Algorithm::ContinuousBNA(vneuron) => vneuron.optimize(problem, n_iters),
             Algorithm::Neat(neat) => neat.optimize(problem, n_iters),
             Algorithm::NeuralNetwork(network) => network.optimize(problem, n_iters),
@@ -96,7 +96,7 @@ impl NeuroevolutionAlgorithm for Algorithm {
         match self {
             Algorithm::DiscreteOneplusoneNA(network) => network.optimize_cmaes(problem),
             Algorithm::ContinuousOneplusoneNA(network) => network.optimize_cmaes(problem),
-            Algorithm::DiscreteBNA(vneuron) => vneuron.optimize_cmaes(problem),
+            Algorithm::DiscreteBNA(vnetwork) => vnetwork.optimize_cmaes(problem),
             Algorithm::ContinuousBNA(vneuron) => vneuron.optimize_cmaes(problem),
             Algorithm::Neat(neat) => neat.optimize_cmaes(problem),
             Algorithm::NeuralNetwork(network) => network.optimize_cmaes(problem),
@@ -108,7 +108,7 @@ impl NeuroevolutionAlgorithm for Algorithm {
         match self {
             Algorithm::DiscreteOneplusoneNA(network) => network.evaluate(input),
             Algorithm::ContinuousOneplusoneNA(network) => network.evaluate(input),
-            Algorithm::DiscreteBNA(vneuron) => vneuron.evaluate(input),
+            Algorithm::DiscreteBNA(vnetwork) => vnetwork.evaluate(input),
             Algorithm::ContinuousBNA(vneuron) => vneuron.evaluate(input),
             Algorithm::Neat(neat) => neat.evaluate(input),
             Algorithm::NeuralNetwork(network) => network.evaluate(input),
@@ -120,7 +120,7 @@ impl NeuroevolutionAlgorithm for Algorithm {
         match self {
             Algorithm::DiscreteOneplusoneNA(network) => network.optimization_step(problem),
             Algorithm::ContinuousOneplusoneNA(network) => network.optimization_step(problem),
-            Algorithm::DiscreteBNA(vneuron) => vneuron.optimization_step(problem),
+            Algorithm::DiscreteBNA(vnetwork) => vnetwork.optimization_step(problem),
             Algorithm::ContinuousBNA(vneuron) => vneuron.optimization_step(problem),
             Algorithm::Neat(neat) => neat.optimization_step(problem),
             Algorithm::NeuralNetwork(network) => network.optimization_step(problem),

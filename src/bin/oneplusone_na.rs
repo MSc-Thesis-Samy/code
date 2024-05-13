@@ -52,9 +52,10 @@ fn main() {
     println!("half fitness: {:.2}", half.evaluate(&alg));
     print!("{}", alg);
 
-    let network = DiscreteNetwork::new(RESOLUTION, 2, 9);
+    let network = DiscreteNetwork::new(RESOLUTION, 1, 9);
     let mut alg = Algorithm::DiscreteOneplusoneNA(network);
     alg.optimize(&proben1_train, N_ITERATIONS);
-    println!("proben1 fitness: {:.2}", proben1_test.evaluate(&alg));
+    println!("Train fitness: {:.2}", proben1_train.evaluate(&alg));
+    println!("Test fitness: {:.2}", proben1_test.evaluate(&alg));
     print!("{}", alg);
 }

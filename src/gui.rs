@@ -168,11 +168,11 @@ impl State {
     fn get_algorithm_mesh(&self, mesh: &mut graphics::MeshBuilder) -> GameResult {
         match &self.alg {
             Algorithm::ContinuousOneplusoneNA(network) => {
-                let bends = network.get_angles();
+                let angles = network.get_angles();
                 let biases = network.get_biases();
-                for i in 0..bends.len() {
+                for i in 0..angles.len() {
                     let bias = biases[i];
-                    let theta = bends[i][0];
+                    let theta = angles[i][0];
 
                     self.get_decision_line_mesh(mesh, bias, theta, 0.1, 1.)?;
                 }
@@ -194,12 +194,18 @@ impl State {
 
                 self.get_bend_decision_mesh(mesh, bias, angle, 0.1, 1., bend)?;
             }
-            Algorithm::DiscreteBNA(vneuron) => {
-                let bias = vneuron.get_bias();
-                let angle = vneuron.get_angle(0);
-                let bend = vneuron.get_bend();
+            Algorithm::DiscreteBNA(vnetwork) => {
+                let biases = vnetwork.get_biases();
+                let angles = vnetwork.get_angles();
+                let bends = vnetwork.get_bends();
 
-                self.get_bend_decision_mesh(mesh, bias, angle, 0.1, 1., bend)?;
+                for i in 0..biases.len() {
+                    let bias = biases[i];
+                    let theta = angles[i][0];
+                    let bend = bends[i];
+
+                    self.get_bend_decision_mesh(mesh, bias, theta, 0.1, 1., bend)?;
+                }
             }
 
             Algorithm::Neat(_) | Algorithm::NeuralNetwork(_) => {

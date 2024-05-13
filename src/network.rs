@@ -143,7 +143,10 @@ impl NeuroevolutionAlgorithm for Network {
     fn optimization_step(&mut self, problem: &Benchmark) {
         let mut new_network = self.clone();
         for i in 0..self.n_neurons {
-            new_network.biases[i] = Network::mutate_component(self.biases[i]);
+            if random::<f64>() < 1. / (self.dim as f64 * self.n_neurons as f64) {
+                new_network.biases[i] = Network::mutate_component(self.biases[i]);
+            }
+
             for j in 0..self.dim-1 {
                 if random::<f64>() < 1. / (self.dim as f64 * self.n_neurons as f64) {
                     new_network.angles[i][j] = Network::mutate_component(self.angles[i][j]);

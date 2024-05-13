@@ -1,6 +1,6 @@
 use std::fs::File;
 use ggez::*;
-use neuroevolution::discrete_vneuron::DiscreteVNeuron;
+use neuroevolution::discrete_vnetwork::DiscreteVNetwork;
 use neuroevolution::gui::*;
 use neuroevolution::neuroevolution_algorithm::*;
 use neuroevolution::constants::*;
@@ -9,8 +9,8 @@ use neuroevolution::benchmarks::*;
 fn main() {
     // let network = DiscreteNetwork::new(RESOLUTION, 1, 2);
     // let alg = Algorithm::DiscreteOneplusoneNA(network);
-    let vneuron = DiscreteVNeuron::new(RESOLUTION, 2);
-    let alg = Algorithm::DiscreteBNA(vneuron);
+    let vnetwork = DiscreteVNetwork::new(RESOLUTION, 1, 2);
+    let alg = Algorithm::DiscreteBNA(vnetwork);
 
     let quarter = Benchmark::new(Problem::Quarter);
 

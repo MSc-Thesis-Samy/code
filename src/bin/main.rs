@@ -7,13 +7,10 @@ use toml;
 use ggez::*;
 use clap::Parser;
 use neuroevolution::cli::*;
-use neuroevolution::vneuron::VNeuron;
-use neuroevolution::discrete_vneuron::DiscreteVNeuron;
-use neuroevolution::network::Network;
 use neuroevolution::discrete_network::DiscreteNetwork;
+use neuroevolution::discrete_vnetwork::DiscreteVNetwork;
 use neuroevolution::neuroevolution_algorithm::{NeuroevolutionAlgorithm, Algorithm};
 use neuroevolution::benchmarks::*;
-use neuroevolution::constants::*;
 use neuroevolution::neat::*;
 use neuroevolution::neural_network::NeuralNetworkConfig;
 
@@ -38,7 +35,7 @@ fn get_algorithm(algorithm_type: AlgorithmType, resolution: usize, neurons: usiz
             Algorithm::DiscreteOneplusoneNA(network)
         }
         AlgorithmType::Bna => {
-            let vneuron = DiscreteVNeuron::new(resolution, dim);
+            let vneuron = DiscreteVNetwork::new(resolution, neurons, dim);
             Algorithm::DiscreteBNA(vneuron)
         }
     }

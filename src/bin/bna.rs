@@ -1,5 +1,5 @@
 use neuroevolution::vneuron::*;
-use neuroevolution::discrete_vneuron::*;
+use neuroevolution::discrete_vnetwork::*;
 use neuroevolution::benchmarks::*;
 use neuroevolution::neuroevolution_algorithm::*;
 use neuroevolution::constants::*;
@@ -21,8 +21,8 @@ fn main() {
     println!("two_quarters fitness: {:.2}", two_quarters.evaluate(&alg));
     println!("Half: {}", alg);
 
-    let dvneuron = DiscreteVNeuron::new(RESOLUTION, 2);
-    let mut alg = Algorithm::DiscreteBNA(dvneuron);
+    let dvnetwork = DiscreteVNetwork::new(RESOLUTION, 1, 2);
+    let mut alg = Algorithm::DiscreteBNA(dvnetwork);
     alg.optimize(&half, N_ITERATIONS);
     println!("half fitness: {:.2}", half.evaluate(&alg));
     println!("Half: {}", alg);
