@@ -35,8 +35,8 @@ fn get_algorithm(algorithm_type: AlgorithmType, resolution: usize, neurons: usiz
             Algorithm::DiscreteOneplusoneNA(network)
         }
         AlgorithmType::Bna => {
-            let vneuron = DiscreteVNetwork::new(resolution, neurons, dim);
-            Algorithm::DiscreteBNA(vneuron)
+            let vnetwork = DiscreteVNetwork::new(resolution, neurons, dim);
+            Algorithm::DiscreteBNA(vnetwork)
         }
     }
 }
@@ -74,7 +74,7 @@ fn main() {
             let n_iters = alg.optimize_with_early_stopping(&problem, iterations, max_fitness_tol, stagnation);
             let elapsed = start.elapsed().as_secs_f64();
 
-            (problem.evaluate(&alg), n_iters, elapsed)
+            (problem.test(&alg), n_iters, elapsed)
         }).collect::<Vec<_>>();
 
         if let Some(output_path) = cli.output {
@@ -107,7 +107,7 @@ fn main() {
                 Benchmark::PoleBalancing => {
                     println!("Evolving algorithm...");
                     let _ = alg.optimize_with_early_stopping(&problem, iterations, max_fitness_tol, stagnation);
-                    println!("Fitness: {}", problem.evaluate(&alg));
+                    println!("Fitness: {}", problem.test(&alg));
 
                     let pole_balancing_state = neuroevolution::pole_balancing::State::default();
                     let state = neuroevolution::pole_balancing_gui::State::new(pole_balancing_state, alg);
@@ -123,7 +123,7 @@ fn main() {
 
         false => {
             let n_iters = alg.optimize_with_early_stopping(&problem, cli.iterations, cli.error_tol, None);
-            println!("Iterations: {}\nFitness: {:.2}", n_iters, problem.evaluate(&alg));
+            println!("Iterations: {}\nFitness: {:.2}", n_iters, problem.test(&alg));
         }
     }
 }

@@ -18,8 +18,7 @@ pub enum Problem {
     Cube,
     Xor,
     PoleBalancing,
-    Proben1Train,
-    Proben1Test,
+    Proben1,
     LocalOpt,
 }
 
@@ -27,7 +26,8 @@ pub enum Problem {
 pub enum Benchmark {
     PoleBalancing,
     Classification(LabeledPoints),
-    SphereClassification(LabeledPoints)
+    SphereClassification(LabeledPoints),
+    DatasetClassification(LabeledPoints, LabeledPoints),
 }
 
 impl Benchmark {
@@ -35,6 +35,14 @@ impl Benchmark {
         match self {
             Benchmark::PoleBalancing => pole_balancing(alg),
             Benchmark::Classification(points) | Benchmark::SphereClassification(points) => classification(alg, points),
+            Benchmark::DatasetClassification(train, _) => classification(alg, train),
+        }
+    }
+
+    pub fn test(&self, alg: &dyn NeuroevolutionAlgorithm) -> f64 {
+        match self {
+            Benchmark::DatasetClassification(_, test) => classification(alg, test),
+            _ => self.evaluate(alg),
         }
     }
 
@@ -48,15 +56,10 @@ impl Benchmark {
             Problem::Cube => Benchmark::SphereClassification(cube()),
             Problem::Xor => Benchmark::Classification(xor()),
             Problem::PoleBalancing => Benchmark::PoleBalancing,
-            Problem::Proben1Train => {
+            Problem::Proben1=> {
                 let data = read_cancer1_file();
-                let (train, _) = get_proben1_splits(&data);
-                Benchmark::Classification(train)
-            },
-            Problem::Proben1Test => {
-                let data = read_cancer1_file();
-                let (_, test) = get_proben1_splits(&data);
-                Benchmark::Classification(test)
+                let (train, test) = get_proben1_splits(&data);
+                Benchmark::DatasetClassification(train, test)
             },
         }
     }

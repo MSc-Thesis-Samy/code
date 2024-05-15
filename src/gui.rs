@@ -159,7 +159,8 @@ impl State {
                     )?;
                 }
             }
-            Benchmark::PoleBalancing => ()
+            Benchmark::PoleBalancing => (),
+            Benchmark::DatasetClassification(_, _) => (),
         }
 
         Ok(())
@@ -232,7 +233,8 @@ impl State {
                         }
                     }
 
-                    Benchmark::PoleBalancing => ()
+                    Benchmark::PoleBalancing => (),
+                    Benchmark::DatasetClassification(_, _) => (),
                 }
             }
 
