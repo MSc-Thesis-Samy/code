@@ -1,0 +1,8 @@
+input_ids = [1, 2]
+output_ids = [4]
+bias_id = 3
+
+[[neurons]]
+id = 4
+inputs = [1, 2, 3]
+activation = "sigmoid"

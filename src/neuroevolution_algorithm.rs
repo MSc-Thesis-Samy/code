@@ -27,7 +27,7 @@ pub trait NeuroevolutionAlgorithm {
             self.optimization_step(problem);
             iters += 1;
 
-            let fitness = problem.evaluate(self);
+            let fitness = problem.test(self);
             if fitness > best_fitness {
                 best_fitness = fitness;
                 stagnation = 0;
