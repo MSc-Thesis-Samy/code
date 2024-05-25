@@ -2,7 +2,7 @@ use rand::prelude::*;
 use serde_derive::Deserialize;
 use rand_distr::Normal;
 use std::collections::HashMap;
-use cmaes::{DVector, fmax};
+use cmaes::{DVector, CMAESOptions, Mode};
 use crate::neuroevolution_algorithm::{NeuroevolutionAlgorithm, Algorithm};
 
 pub type ActivationFunction = fn(f64) -> f64;
@@ -176,6 +176,29 @@ impl NeuroevolutionAlgorithm for NeuralNetwork {
         unimplemented!("Optimization step not implemented for NeuralNetwork");
     }
 
+    fn optimize_with_early_stopping(&mut self, problem: &crate::benchmarks::Benchmark, _max_iters: u32, _fitness_tol: f64, _max_stagnation: Option<u32>) -> u32 where Self: Sized {
+        let eval_fn = |x: &DVector<f64>| {
+            let network = self.to_network(x);
+            problem.evaluate(&Algorithm::NeuralNetwork(network))
+        };
+
+        let initial_connection_weights = self.to_vector();
+
+        let mut cmaes_state = CMAESOptions::new(initial_connection_weights, 0.4)
+            .mode(Mode::Maximize)
+            .build(eval_fn)
+            .unwrap();
+
+        let _ = cmaes_state.run();
+        let Some(best_individual) = cmaes_state.overall_best_individual() else {
+            panic!("No best individual found");
+        };
+        let generation = cmaes_state.generation() as u32;
+
+        *self = self.to_network(&best_individual.point);
+        generation
+    }
+
     fn optimize_cmaes(&mut self, problem: &crate::benchmarks::Benchmark) {
         let eval_fn = |x: &DVector<f64>| {
             let network = self.to_network(x);
@@ -183,8 +206,18 @@ impl NeuroevolutionAlgorithm for NeuralNetwork {
         };
 
         let initial_connection_weights = self.to_vector();
-        let solution = fmax(eval_fn, initial_connection_weights, 0.4);
-        *self = self.to_network(&solution.point);
+
+        let mut cmaes_state = CMAESOptions::new(initial_connection_weights, 0.4)
+            .mode(Mode::Maximize)
+            .build(eval_fn)
+            .unwrap();
+
+        let _ = cmaes_state.run();
+        let Some(best_individual) = cmaes_state.overall_best_individual() else {
+            panic!("No best individual found");
+        };
+
+        *self = self.to_network(&best_individual.point);
     }
 
     fn evaluate(&self, input: &Vec<f64>) -> f64 {

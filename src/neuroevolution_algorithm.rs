@@ -127,4 +127,16 @@ impl NeuroevolutionAlgorithm for Algorithm {
             Algorithm::NeatIndividual(individual) => individual.optimization_step(problem),
         }
     }
+
+    fn optimize_with_early_stopping(&mut self, problem: &Benchmark, max_iters: u32, fitness_tol: f64, max_stagnation: Option<u32>) -> u32 where Self: Sized {
+        match self {
+            Algorithm::DiscreteOneplusoneNA(network) => network.optimize_with_early_stopping(problem, max_iters, fitness_tol, max_stagnation),
+            Algorithm::ContinuousOneplusoneNA(network) => network.optimize_with_early_stopping(problem, max_iters, fitness_tol, max_stagnation),
+            Algorithm::DiscreteBNA(vnetwork) => vnetwork.optimize_with_early_stopping(problem, max_iters, fitness_tol, max_stagnation),
+            Algorithm::ContinuousBNA(vneuron) => vneuron.optimize_with_early_stopping(problem, max_iters, fitness_tol, max_stagnation),
+            Algorithm::Neat(neat) => neat.optimize_with_early_stopping(problem, max_iters, fitness_tol, max_stagnation),
+            Algorithm::NeuralNetwork(network) => network.optimize_with_early_stopping(problem, max_iters, fitness_tol, max_stagnation),
+            Algorithm::NeatIndividual(individual) => individual.optimize_with_early_stopping(problem, max_iters, fitness_tol, max_stagnation),
+        }
+    }
 }

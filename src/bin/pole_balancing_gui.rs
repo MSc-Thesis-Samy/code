@@ -38,7 +38,7 @@ fn main() {
 
     let state = State::new(pole_balancing_state, alg);
 
-    let mut conf_file = File::open("gui_conf.toml").unwrap();
+    let mut conf_file = File::open("configs/gui_conf.toml").unwrap();
     let conf = conf::Conf::from_toml_file(&mut conf_file).unwrap();
 
     let cb = ContextBuilder::new("Neuroevolution", "Samy Haffoudhi") .default_conf(conf);

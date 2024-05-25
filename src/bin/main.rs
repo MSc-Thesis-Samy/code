@@ -98,7 +98,7 @@ fn main() {
 
     match cli.gui {
         true => {
-            let mut conf_file = File::open("gui_conf.toml").unwrap();
+            let mut conf_file = File::open("configs/gui_conf.toml").unwrap();
             let conf = conf::Conf::from_toml_file(&mut conf_file).unwrap();
             let cb = ContextBuilder::new("Neuroevolution", "Samy Haffoudhi") .default_conf(conf);
             let (ctx, event_loop) = cb.build().unwrap();
@@ -122,8 +122,16 @@ fn main() {
         }
 
         false => {
-            let n_iters = alg.optimize_with_early_stopping(&problem, cli.iterations, cli.error_tol, None);
-            println!("Iterations: {}\nFitness: {:.2}", n_iters, problem.test(&alg));
+            match alg {
+                Algorithm::NeuralNetwork(_) => {
+                    alg.optimize(&problem, iterations);
+                    println!("Fitness: {:.2}", problem.test(&alg));
+                },
+                _ => {
+                    let n_iters = alg.optimize_with_early_stopping(&problem, cli.iterations, cli.error_tol, None);
+                    println!("Iterations: {}\nFitness: {:.2}", n_iters, problem.test(&alg));
+                }
+            }
         }
     }
 }
