@@ -72,8 +72,8 @@ impl std::fmt::Display for Algorithm {
             Algorithm::ContinuousOneplusoneNA(network) => write!(f, "{}", network),
             Algorithm::DiscreteBNA(vnetwork) => write!(f, "{}", vnetwork),
             Algorithm::ContinuousBNA(vneuron) => write!(f, "{}", vneuron),
-            Algorithm::Neat(neat) => write!(f, "{:?}", neat), // TODO: Implement Display for Neat
-            Algorithm::NeuralNetwork(network) => write!(f, "{:?}", network), // TODO: Implement Display for NeuralNetwork
+            Algorithm::Neat(neat) => write!(f, "{:?}", neat),
+            Algorithm::NeuralNetwork(network) => write!(f, "{:?}", network),
             Algorithm::NeatIndividual(individual) => write!(f, "{:?}", individual),
         }
     }

@@ -47,7 +47,6 @@ pub struct Individual {
 enum Mutation {
     NewConnection(ConnectionGene),
     NewNode(NodeGene, ConnectionGene, ConnectionGene),
-    // TODO Add weight perturbation?
 }
 
 #[derive(Debug, Clone)]
@@ -124,7 +123,6 @@ impl Genome {
     }
 
     fn are_connected(&self, in_node: u32, out_node: u32) -> bool {
-        // TODO improve time complexity
         self.connections.iter().any(|c| c.in_node == in_node && c.out_node == out_node)
     }
 }
@@ -141,7 +139,6 @@ impl Individual {
         let in_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Output).collect::<Vec<_>>();
         let out_nodes = self.genome.nodes.iter().filter(|n| n.layer != NodeType::Input && n.layer != NodeType::Bias).collect::<Vec<_>>();
 
-        // TODO only choose unconnected nodes?
         let in_node = in_nodes.choose(&mut thread_rng()).unwrap();
         let out_node = out_nodes.choose(&mut thread_rng()).unwrap();
         let weight = distribution.sample(&mut thread_rng());
@@ -177,7 +174,6 @@ impl Individual {
     }
 
     fn mutate_add_node(&mut self, history: &mut History) {
-        // TODO always pick an enabled connection?
         let connection = match self.genome.connections.choose_mut(&mut thread_rng()) {
             Some(connection) => connection,
             None => return
@@ -211,7 +207,7 @@ impl Individual {
             }
         }
 
-        let new_node = NodeGene::new(history.nodes_nb + 1, NodeType::Hidden, SIGMOID ); // TODO get from config
+        let new_node = NodeGene::new(history.nodes_nb + 1, NodeType::Hidden, SIGMOID );
         let in_new_connection = ConnectionGene::new(connection.in_node, new_node.id, 1., true, history.innovation + 1);
         let new_out_connection = ConnectionGene::new(new_node.id, connection.out_node, connection.weight, true, history.innovation + 2);
         history.nodes_nb += 1;
@@ -516,7 +512,7 @@ impl Neat {
             }
 
             for i in 1..=n_outputs {
-                let node = NodeGene::new(i + n_inputs, NodeType::Output, SIGMOID); // TODO get from config?
+                let node = NodeGene::new(i + n_inputs, NodeType::Output, SIGMOID);
                 genome.add_node(node);
             }
 
