@@ -1,5 +1,5 @@
 population_size = 100
-n_inputs = 4
+n_inputs = 6
 n_outputs = 1
 weights_mean = 0.0
 weights_stddev = 0.8

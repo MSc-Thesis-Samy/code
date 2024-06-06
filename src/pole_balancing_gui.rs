@@ -76,6 +76,12 @@ impl ggez::event::EventHandler<GameError> for State {
             graphics::Color::BLACK,
         )?;
 
+        mesh.line(
+            &[mint::Point2 { x: 0., y: CART_Y as f32 + 50. }, mint::Point2 { x: 800., y: CART_Y as f32 + 50. }],
+            2.,
+            graphics::Color::BLACK,
+        )?;
+
         let mut text = graphics::Text::new(format!("Time step: {}", self.time_step));
 
         let mesh = graphics::Mesh::from_data(ctx, mesh.build());

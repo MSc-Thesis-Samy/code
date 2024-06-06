@@ -62,7 +62,6 @@ impl State {
     }
 
     pub fn to_vec(&self) -> Vec<f64> {
-        // TODO scaling
         let mut vec = vec![self.cart_position, self.cart_velocity];
         vec.extend(self.pole_angles.iter().cloned());
         vec.extend(self.pole_velocities.iter().cloned());

@@ -1,0 +1,28 @@
+input_ids = [1, 2]
+output_ids = [8]
+bias_id = 3
+
+[[neurons]]
+id = 4
+inputs = [1, 2, 3]
+activation = "sigmoid"
+
+[[neurons]]
+id = 5
+inputs = [1, 2, 3]
+activation = "sigmoid"
+
+[[neurons]]
+id = 6
+inputs = [1, 2, 3]
+activation = "sigmoid"
+
+[[neurons]]
+id = 7
+inputs = [1, 2, 3]
+activation = "sigmoid"
+
+[[neurons]]
+id = 8
+inputs = [4, 5, 6, 7]
+activation = "sigmoid"

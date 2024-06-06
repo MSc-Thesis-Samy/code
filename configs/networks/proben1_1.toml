@@ -1,0 +1,13 @@
+input_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+output_ids = [12]
+bias_id = 10
+
+[[neurons]]
+id = 11
+inputs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+activation = "sigmoid"
+
+[[neurons]]
+id = 12
+inputs = [11]
+activation = "sigmoid"
