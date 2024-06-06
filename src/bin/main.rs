@@ -23,7 +23,7 @@ fn get_algorithm(algorithm_type: AlgorithmType, resolution: usize, neurons: usiz
             let neat = Neat::new(config);
             Algorithm::Neat(neat)
         }
-        AlgorithmType::NeuralNetwork => {
+        AlgorithmType::Cmaes => {
             let toml_config: &str = toml_config.as_deref().unwrap();
             let network_config: NeuralNetworkConfig = toml::from_str(&toml_config).unwrap();
 

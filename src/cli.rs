@@ -39,5 +39,5 @@ pub enum AlgorithmType {
     Oneplusonena,
     Bna,
     Neat,
-    NeuralNetwork,
+    Cmaes,
 }

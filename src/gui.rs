@@ -211,8 +211,7 @@ impl State {
 
             Algorithm::Neat(_) | Algorithm::NeuralNetwork(_) => {
                 match &self.problem {
-                    Benchmark::Classification(points) | Benchmark::SphereClassification(points) => {
-                    // for now, draw outputs
+                    Benchmark::Classification(points) => {
                         for (point, _) in points {
                             let output = self.alg.evaluate(&point);
                             // gradient from red to green
@@ -228,6 +227,31 @@ impl State {
                                 point,
                                 20.0,
                                 0.1,
+                                color,
+                            )?;
+                        }
+                    }
+                    Benchmark::SphereClassification(points) => {
+                        for (point, _) in points {
+                            let output = self.alg.evaluate(&point);
+                            // gradient from red to green
+                            let color = graphics::Color::new(
+                                1.0 - output as f32,
+                                output as f32,
+                                0.0,
+                                1.0,
+                            );
+                            let point = self.polar_to_canvas(&point);
+                            // mesh.circle(
+                            //     graphics::DrawMode::stroke(8.0),
+                            //     point,
+                            //     20.0,
+                            //     0.1,
+                            //     color,
+                            // )?;
+                            mesh.rectangle(
+                                graphics::DrawMode::fill(),
+                                graphics::Rect::new(point.x - 5., point.y - 5., 10.0, 10.0),
                                 color,
                             )?;
                         }
