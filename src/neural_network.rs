@@ -2,7 +2,7 @@ use rand::prelude::*;
 use serde_derive::Deserialize;
 use rand_distr::Normal;
 use std::collections::HashMap;
-use cmaes::{DVector, CMAESOptions, Mode};
+use cmaes::{DVector, CMAESOptions, Mode, CMAES};
 use crate::neuroevolution_algorithm::{NeuroevolutionAlgorithm, Algorithm};
 
 pub type ActivationFunction = fn(f64) -> f64;

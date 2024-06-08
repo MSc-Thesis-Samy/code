@@ -271,9 +271,19 @@ impl State {
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        if self.iteration < self.n_iters {
-            self.alg.optimization_step(&self.problem);
-            self.iteration += 1;
+        match &self.alg {
+            Algorithm::NeuralNetwork(_) => {
+                if self.iteration == 0 {
+                    let generation = self.alg.optimize_with_early_stopping(&self.problem, self.n_iters, 2e-2, None);
+                    self.iteration = generation;
+                } else {}
+            }
+            _ => {
+                if self.iteration < self.n_iters {
+                    self.alg.optimization_step(&self.problem);
+                    self.iteration += 1;
+                }
+            }
         }
 
         Ok(())
