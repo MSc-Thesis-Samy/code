@@ -1,4 +1,4 @@
-# MSc Thesis Code
+# MSc Thesis Code - Implementation and Evaluation of Recent Neuroevolution Algorithms
 
 This repository contains the code for my MSc thesis on neuroevolution.
 It is a framework for visualizing and testing different neuroevolution algorithms on benchmark problems.
