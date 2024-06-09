@@ -3,7 +3,8 @@
 This repository contains the code for my MSc thesis on neuroevolution.
 It is a framework for visualizing and testing different neuroevolution algorithms on benchmark problems.
 
-![Screenshot](images/screenshot.png)
+<!-- ![Screenshot](images/screenshot.png) -->
+<img src="images/screenshot.png" width="800">
 
 ## Setup
 
