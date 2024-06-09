@@ -98,6 +98,10 @@ fn main() {
 
     match cli.gui {
         true => {
+            if cli.problem == Problem::Proben1 {
+                panic!("Proben1 is not supported in GUI mode");
+            }
+
             let mut conf_file = File::open("configs/gui_conf.toml").unwrap();
             let conf = conf::Conf::from_toml_file(&mut conf_file).unwrap();
             let cb = ContextBuilder::new("Neuroevolution", "Samy Haffoudhi") .default_conf(conf);
