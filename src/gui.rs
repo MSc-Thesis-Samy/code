@@ -1,5 +1,6 @@
 use std::f64::consts::PI;
 use ggez::*;
+use crate::neural_network::NeuralNetwork;
 use crate::neuroevolution_algorithm::*;
 use crate::benchmarks::Benchmark;
 
@@ -267,6 +268,92 @@ impl State {
 
         Ok(())
     }
+
+    fn draw_neural_network(netork: &NeuralNetwork, mesh: &mut graphics::MeshBuilder) -> GameResult {
+        let input_ids = netork.get_input_ids();
+        let output_ids = netork.get_output_ids();
+        let hidden_ids = netork.get_hidden_ids();
+        let bias_id = netork.get_bias_id();
+
+        let connections = netork.get_connection_ids();
+
+        for (from, to) in connections {
+            let (x1, y1) = match from {
+                id if input_ids.contains(&id) => (100.0, 200.0 + 50.0 * input_ids.iter().position(|&x| x == id).unwrap() as f32),
+                id if hidden_ids.contains(&id) => (300.0, 200.0 + 50.0 * hidden_ids.iter().position(|&x| x == id).unwrap() as f32),
+                id if output_ids.contains(&id) => (500.0, 200.0 + 50.0 * output_ids.iter().position(|&x| x == id).unwrap() as f32),
+                id if bias_id == Some(id) => (100.0, 150.0),
+                _ => panic!("Invalid neuron id"),
+            };
+
+            let (x2, y2) = match to {
+                id if input_ids.contains(&id) => (100.0, 200.0 + 50.0 * input_ids.iter().position(|&x| x == id).unwrap() as f32),
+                id if hidden_ids.contains(&id) => (300.0, 200.0 + 50.0 * hidden_ids.iter().position(|&x| x == id).unwrap() as f32),
+                id if output_ids.contains(&id) => (500.0, 200.0 + 50.0 * output_ids.iter().position(|&x| x == id).unwrap() as f32),
+                id if bias_id == Some(id) => (100.0, 150.0),
+                _ => panic!("Invalid neuron id"),
+            };
+
+            mesh.line(
+                &[
+                    mint::Point2{x: x1, y: y1},
+                    mint::Point2{x: x2, y: y2},
+                ],
+                2.0,
+                graphics::Color::BLACK,
+            )?;
+        }
+
+        if let Some(_) = bias_id {
+            let x = 100.0;
+            let y = 150.0;
+            mesh.circle(
+                graphics::DrawMode::fill(),
+                mint::Point2{x, y},
+                20.0,
+                0.1,
+                graphics::Color::GREEN,
+            )?;
+        }
+
+        for (i, _) in input_ids.iter().enumerate() {
+            let x = 100.0;
+            let y = 200.0 + 50.0 * i as f32;
+            mesh.circle(
+                graphics::DrawMode::fill(),
+                mint::Point2{x, y},
+                20.0,
+                0.1,
+                graphics::Color::BLUE,
+            )?;
+        }
+
+        for (i, _) in hidden_ids.iter().enumerate() {
+            let x = 300.0;
+            let y = 200.0 + 50.0 * i as f32;
+            mesh.circle(
+                graphics::DrawMode::fill(),
+                mint::Point2{x, y},
+                20.0,
+                0.1,
+                graphics::Color::RED,
+            )?;
+        }
+
+        for (i, _) in output_ids.iter().enumerate() {
+            let x = 500.0;
+            let y = 200.0 + 50.0 * i as f32;
+            mesh.circle(
+                graphics::DrawMode::fill(),
+                mint::Point2{x, y},
+                20.0,
+                0.1,
+                graphics::Color::BLACK,
+            )?;
+        }
+
+        Ok(())
+    }
 }
 
 impl ggez::event::EventHandler<GameError> for State {
@@ -293,8 +380,17 @@ impl ggez::event::EventHandler<GameError> for State {
         let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::WHITE);
         let mesh = &mut graphics::MeshBuilder::new();
 
-        self.get_problem_points_mesh(mesh)?;
-        self.get_algorithm_mesh(mesh)?;
+        match &self.alg {
+            Algorithm::Neat(neat) => {
+                let best_individual = neat.get_best_individual();
+                let network = best_individual.to_neural_network();
+                State::draw_neural_network(&network, mesh)?;
+            }
+            _ => {
+                self.get_problem_points_mesh(mesh)?;
+                self.get_algorithm_mesh(mesh)?;
+            }
+        }
 
         let mut text = graphics::Text::new(format!("Iteration: {}\nFitness: {:.2}", self.iteration, self.problem.evaluate(&self.alg)));
 

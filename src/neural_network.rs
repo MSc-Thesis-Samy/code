@@ -169,6 +169,40 @@ impl NeuralNetwork {
 
         network
     }
+
+    pub fn get_hidden_ids(&self) -> Vec<u32> {
+        let mut hidden_neurons_ids = Vec::new();
+        for neuron in self.neurons.iter() {
+            if !self.input_ids.contains(&neuron.id) && !self.output_ids.contains(&neuron.id) && self.bias_id != Some(neuron.id) {
+                hidden_neurons_ids.push(neuron.id);
+            }
+        }
+
+        hidden_neurons_ids
+    }
+
+    pub fn get_input_ids(&self) -> &Vec<u32> {
+        &self.input_ids
+    }
+
+    pub fn get_output_ids(&self) -> &Vec<u32> {
+        &self.output_ids
+    }
+
+    pub fn get_bias_id(&self) -> Option<u32> {
+        self.bias_id
+    }
+
+    pub fn get_connection_ids(&self) -> Vec<(u32, u32)> {
+        let mut connection_ids = Vec::new();
+        for neuron in self.neurons.iter() {
+            for connection in &neuron.inputs {
+                connection_ids.push((neuron.id, connection.input_id));
+            }
+        }
+
+        connection_ids
+    }
 }
 
 impl NeuroevolutionAlgorithm for NeuralNetwork {

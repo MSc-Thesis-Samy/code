@@ -323,7 +323,7 @@ impl Individual {
         Individual::new(Genome { nodes, connections })
     }
 
-    fn to_neural_network(&self) -> NeuralNetwork {
+    pub fn to_neural_network(&self) -> NeuralNetwork {
         let (input_ids, input_activations): (Vec<u32>, Vec<ActivationFunction>) = self.genome.nodes.iter().filter(|n| n.layer == NodeType::Input).map(|n| (n.id, n.activation)).unzip();
         let (output_ids, output_activations): (Vec<u32>, Vec<ActivationFunction>) = self.genome.nodes.iter().filter(|n| n.layer == NodeType::Output).map(|n| (n.id, n.activation)).unzip();
         let mut input_activations = input_activations.iter();
